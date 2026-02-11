@@ -4,9 +4,11 @@ import { CharacterData, Theme, Config, SectionConfig, SheetGenerationResult, Pag
 
 export class SheetEngine {
   private components: Record<string, Component>;
+  private componentNames: string;
 
   constructor(components: Record<string, Component>) {
     this.components = components;
+    this.componentNames = Object.keys(components).join(', ');
   }
 
   generate(config: Config, theme: Theme, data: CharacterData): SheetGenerationResult {
@@ -64,7 +66,7 @@ export class SheetEngine {
 
         const component = this.components[section.component];
         if (!component) {
-          console.warn(`Component '${section.component}' not found. Available components: ${Object.keys(this.components).join(', ')}`);
+          console.warn(`Component '${section.component}' not found. Available components: ${this.componentNames}`);
           return '';
         }
 

@@ -49,6 +49,9 @@ const SKILLS: Skill[] = [
   { name: 'Survival', ability: 'wisdom' },
 ];
 
+// Default proficiency data to avoid creating new objects repeatedly
+const DEFAULT_PROFICIENCY = { proficient: false };
+
 export const COMPONENTS: Record<string, Component> = {
   // Character header with name, class, level, etc.
   header: {
@@ -321,7 +324,7 @@ function renderDeathSaves(data: CharacterData): string {
 
 function renderSkill(skill: Skill, data: CharacterData): string {
   const skillKey = skill.name.toLowerCase().replace(/ /g, '');
-  const skillData = data.skills?.[skillKey] || { proficient: false };
+  const skillData = data.skills?.[skillKey] || DEFAULT_PROFICIENCY;
   const abilityScore = data[skill.ability] || 10;
   const abilityMod = SheetEngine.calculateModifier(abilityScore);
   const profBonus = skillData.proficient ? data.proficiencyBonus || 2 : 0;
@@ -337,7 +340,7 @@ function renderSkill(skill: Skill, data: CharacterData): string {
 }
 
 function renderSave(ability: Ability, data: CharacterData): string {
-  const saveData = data.savingThrows?.[ability] || { proficient: false };
+  const saveData = data.savingThrows?.[ability] || DEFAULT_PROFICIENCY;
   const abilityScore = data[ability] || 10;
   const abilityMod = SheetEngine.calculateModifier(abilityScore);
   const profBonus = saveData.proficient ? data.proficiencyBonus || 2 : 0;
