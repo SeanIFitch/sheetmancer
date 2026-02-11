@@ -52,15 +52,22 @@ export interface CharacterData {
   features: string[];
 
   // Spells (optional)
-  spells?: any[];
+  spells?: Array<{
+    name: string;
+    level: number;
+    school?: string;
+    castingTime?: string;
+    range?: string;
+    components?: string;
+    duration?: string;
+    description?: string;
+  }>;
 
   // Optional fields
-  spellSlots?: {
-    [level: number]: {
-      total: number;
-      used: number;
-    };
-  };
+  spellSlots?: Record<number, {
+    total: number;
+    used: number;
+  }>;
 
   attacks?: Array<{
     name: string;
