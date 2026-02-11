@@ -79,7 +79,7 @@ export class SheetEngine {
 
   private generateStyles(theme: Theme): string {
     const t = theme;
-    const optionalStyle = (condition: string | undefined, style: string) => condition ? style : '';
+    const conditionalStyle = (condition: string | undefined, style: string) => condition ? style : '';
 
     return `
       .character-sheet-page {
@@ -93,8 +93,8 @@ export class SheetEngine {
         font-family: ${t.typography.body.family};
         color: ${t.colors.text};
         page-break-after: always;
-        ${optionalStyle(t.backgrounds.border, `border: ${t.backgrounds.border};`)}
-        ${optionalStyle(t.backgrounds.shadow, `box-shadow: ${t.backgrounds.shadow};`)}
+        ${conditionalStyle(t.backgrounds.border, `border: ${t.backgrounds.border};`)}
+        ${conditionalStyle(t.backgrounds.shadow, `box-shadow: ${t.backgrounds.shadow};`)}
       }
 
       .character-sheet-page::before {

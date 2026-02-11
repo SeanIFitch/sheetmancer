@@ -57,6 +57,13 @@ function renderSectionHeader(config: SectionConfig, defaultTitle: string): strin
   return config.showHeader !== false ? `<div class="section-header">${config.title || defaultTitle}</div>` : '';
 }
 
+// Helper to render list of items
+function renderItemList(items: string[], emptyMessage: string, itemClass: string): string {
+  return items.length > 0 
+    ? items.map((item) => `<div class="${itemClass}">${item}</div>`).join('') 
+    : `<div class="${itemClass}">${emptyMessage}</div>`;
+}
+
 export const COMPONENTS: Record<string, Component> = {
   // Character header with name, class, level, etc.
   header: {
@@ -157,10 +164,7 @@ export const COMPONENTS: Record<string, Component> = {
   // Equipment list
   equipment: {
     render(config: SectionConfig, _theme: Theme, data: CharacterData): string {
-      const items = data.equipment || [];
-      const itemsHtml = items.length > 0 
-        ? items.map((item) => `<div class="equipment-item">${item}</div>`).join('') 
-        : '<div class="equipment-item">No equipment</div>';
+      const itemsHtml = renderItemList(data.equipment || [], 'No equipment', 'equipment-item');
 
       return `
         <div class="sheet-section">
@@ -173,10 +177,7 @@ export const COMPONENTS: Record<string, Component> = {
   // Features and traits
   features: {
     render(config: SectionConfig, _theme: Theme, data: CharacterData): string {
-      const features = data.features || [];
-      const featuresHtml = features.length > 0 
-        ? features.map((feature) => `<div class="feature-item">${feature}</div>`).join('') 
-        : '<div class="feature-item">No features</div>';
+      const featuresHtml = renderItemList(data.features || [], 'No features', 'feature-item');
 
       return `
         <div class="sheet-section">
@@ -281,7 +282,7 @@ function renderAbility(ability: Ability, data: CharacterData): string {
 
 function renderDeathSaves(data: CharacterData): string {
   const saves = data.deathSaves || { successes: 0, failures: 0 };
-  const renderBubbles = (count: number) => [1, 2, 3]
+  const renderSaveTrackBubbles = (count: number) => [1, 2, 3]
     .map((i) => `<div class="save-bubble ${i <= count ? 'filled' : ''}"></div>`)
     .join('');
 
@@ -289,11 +290,11 @@ function renderDeathSaves(data: CharacterData): string {
     <div class="death-saves">
       <div>
         <div class="field-label">Death Save Successes</div>
-        <div class="save-track">${renderBubbles(saves.successes)}</div>
+        <div class="save-track">${renderSaveTrackBubbles(saves.successes)}</div>
       </div>
       <div>
         <div class="field-label">Death Save Failures</div>
-        <div class="save-track">${renderBubbles(saves.failures)}</div>
+        <div class="save-track">${renderSaveTrackBubbles(saves.failures)}</div>
       </div>
     </div>`;
 }
