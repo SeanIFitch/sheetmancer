@@ -28,7 +28,7 @@ export class SheetEngine {
       .join('');
   }
 
-  private layoutPages(config: Config, data: CharacterData): Page[] {
+  private layoutPages(config: Config, _data: CharacterData): Page[] {
     // Simple pagination - distribute sections across pages
     // In a more advanced version, this would measure content height
     const sectionsPerPage = config.sectionsPerPage || config.sections.length;

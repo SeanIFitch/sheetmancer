@@ -52,7 +52,7 @@ const SKILLS: Skill[] = [
 export const COMPONENTS: Record<string, Component> = {
   // Character header with name, class, level, etc.
   header: {
-    render(config: SectionConfig, theme: Theme, data: CharacterData): string {
+    render(config: SectionConfig, _theme: Theme, data: CharacterData): string {
       const fields = (config.fields as string[]) || ['name', 'class', 'level', 'race', 'background', 'alignment'];
 
       return `
@@ -67,7 +67,7 @@ export const COMPONENTS: Record<string, Component> = {
 
   // Ability scores block
   abilityScores: {
-    render(config: SectionConfig, theme: Theme, data: CharacterData): string {
+    render(config: SectionConfig, _theme: Theme, data: CharacterData): string {
       const abilities = (config.abilities as Ability[]) || [
         'strength',
         'dexterity',
@@ -90,7 +90,7 @@ export const COMPONENTS: Record<string, Component> = {
 
   // Combat statistics
   combatStats: {
-    render(config: SectionConfig, theme: Theme, data: CharacterData): string {
+    render(config: SectionConfig, _theme: Theme, data: CharacterData): string {
       return `
                 <div class="sheet-section">
                     ${config.showHeader !== false ? `<div class="section-header">${config.title || 'Combat'}</div>` : ''}
@@ -130,7 +130,7 @@ export const COMPONENTS: Record<string, Component> = {
 
   // Skills list
   skills: {
-    render(config: SectionConfig, theme: Theme, data: CharacterData): string {
+    render(config: SectionConfig, _theme: Theme, data: CharacterData): string {
       return `
                 <div class="sheet-section">
                     ${config.showHeader !== false ? `<div class="section-header">${config.title || 'Skills'}</div>` : ''}
@@ -144,7 +144,7 @@ export const COMPONENTS: Record<string, Component> = {
 
   // Saving throws
   savingThrows: {
-    render(config: SectionConfig, theme: Theme, data: CharacterData): string {
+    render(config: SectionConfig, _theme: Theme, data: CharacterData): string {
       const abilities: Ability[] = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
 
       return `
@@ -160,7 +160,7 @@ export const COMPONENTS: Record<string, Component> = {
 
   // Equipment list
   equipment: {
-    render(config: SectionConfig, theme: Theme, data: CharacterData): string {
+    render(config: SectionConfig, _theme: Theme, data: CharacterData): string {
       const items = data.equipment || [];
 
       return `
@@ -176,7 +176,7 @@ export const COMPONENTS: Record<string, Component> = {
 
   // Features and traits
   features: {
-    render(config: SectionConfig, theme: Theme, data: CharacterData): string {
+    render(config: SectionConfig, _theme: Theme, data: CharacterData): string {
       const features = data.features || [];
 
       return `
@@ -192,7 +192,7 @@ export const COMPONENTS: Record<string, Component> = {
 
   // Text area for notes, backstory, etc.
   textArea: {
-    render(config: SectionConfig, theme: Theme, data: CharacterData): string {
+    render(config: SectionConfig, _theme: Theme, data: CharacterData): string {
       const fieldName = (config.field as string) || 'notes';
       const content = data[fieldName] || '';
 
@@ -239,7 +239,7 @@ export const COMPONENTS: Record<string, Component> = {
 
   // Proficiency and passive scores
   proficiencyBlock: {
-    render(config: SectionConfig, theme: Theme, data: CharacterData): string {
+    render(config: SectionConfig, _theme: Theme, data: CharacterData): string {
       const passivePerception =
         10 +
         SheetEngine.calculateModifier(data.wisdom || 10) +
@@ -321,15 +321,15 @@ function renderDeathSaves(data: CharacterData): string {
 
 function renderSkill(skill: Skill, data: CharacterData): string {
   const skillKey = skill.name.toLowerCase().replace(/ /g, '');
-  const skillData = data.skills?.[skillKey] || {};
+  const skillData = data.skills?.[skillKey];
   const abilityScore = data[skill.ability] || 10;
   const abilityMod = SheetEngine.calculateModifier(abilityScore);
-  const profBonus = skillData.proficient ? data.proficiencyBonus || 2 : 0;
+  const profBonus = skillData?.proficient ? data.proficiencyBonus || 2 : 0;
   const totalBonus = abilityMod + profBonus;
 
   return `
         <div class="skill-item">
-            <div class="skill-checkbox ${skillData.proficient ? 'checked' : ''}"></div>
+            <div class="skill-checkbox ${skillData?.proficient ? 'checked' : ''}"></div>
             <div class="skill-name">${skill.name}</div>
             <div class="skill-bonus">${SheetEngine.formatModifier(totalBonus)}</div>
         </div>
@@ -337,15 +337,15 @@ function renderSkill(skill: Skill, data: CharacterData): string {
 }
 
 function renderSave(ability: Ability, data: CharacterData): string {
-  const saveData = data.savingThrows?.[ability] || {};
+  const saveData = data.savingThrows?.[ability];
   const abilityScore = data[ability] || 10;
   const abilityMod = SheetEngine.calculateModifier(abilityScore);
-  const profBonus = saveData.proficient ? data.proficiencyBonus || 2 : 0;
+  const profBonus = saveData?.proficient ? data.proficiencyBonus || 2 : 0;
   const totalBonus = abilityMod + profBonus;
 
   return `
         <div class="skill-item">
-            <div class="skill-checkbox ${saveData.proficient ? 'checked' : ''}"></div>
+            <div class="skill-checkbox ${saveData?.proficient ? 'checked' : ''}"></div>
             <div class="skill-name">${ABILITY_FULL_NAMES[ability]}</div>
             <div class="skill-bonus">${SheetEngine.formatModifier(totalBonus)}</div>
         </div>

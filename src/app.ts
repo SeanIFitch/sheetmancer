@@ -1,6 +1,6 @@
 // app.ts - Main application logic
 
-import { CharacterData, Config, Theme } from './types';
+import { CharacterData } from './types';
 import { SheetEngine } from './sheet-engine';
 import { COMPONENTS } from './components';
 import { CONFIGS } from './configs';
