@@ -321,15 +321,15 @@ function renderDeathSaves(data: CharacterData): string {
 
 function renderSkill(skill: Skill, data: CharacterData): string {
   const skillKey = skill.name.toLowerCase().replace(/ /g, '');
-  const skillData = data.skills?.[skillKey];
+  const skillData = data.skills?.[skillKey] || { proficient: false };
   const abilityScore = data[skill.ability] || 10;
   const abilityMod = SheetEngine.calculateModifier(abilityScore);
-  const profBonus = skillData?.proficient ? data.proficiencyBonus || 2 : 0;
+  const profBonus = skillData.proficient ? data.proficiencyBonus || 2 : 0;
   const totalBonus = abilityMod + profBonus;
 
   return `
         <div class="skill-item">
-            <div class="skill-checkbox ${skillData?.proficient ? 'checked' : ''}"></div>
+            <div class="skill-checkbox ${skillData.proficient ? 'checked' : ''}"></div>
             <div class="skill-name">${skill.name}</div>
             <div class="skill-bonus">${SheetEngine.formatModifier(totalBonus)}</div>
         </div>
@@ -337,15 +337,15 @@ function renderSkill(skill: Skill, data: CharacterData): string {
 }
 
 function renderSave(ability: Ability, data: CharacterData): string {
-  const saveData = data.savingThrows?.[ability];
+  const saveData = data.savingThrows?.[ability] || { proficient: false };
   const abilityScore = data[ability] || 10;
   const abilityMod = SheetEngine.calculateModifier(abilityScore);
-  const profBonus = saveData?.proficient ? data.proficiencyBonus || 2 : 0;
+  const profBonus = saveData.proficient ? data.proficiencyBonus || 2 : 0;
   const totalBonus = abilityMod + profBonus;
 
   return `
         <div class="skill-item">
-            <div class="skill-checkbox ${saveData?.proficient ? 'checked' : ''}"></div>
+            <div class="skill-checkbox ${saveData.proficient ? 'checked' : ''}"></div>
             <div class="skill-name">${ABILITY_FULL_NAMES[ability]}</div>
             <div class="skill-bonus">${SheetEngine.formatModifier(totalBonus)}</div>
         </div>
