@@ -60,20 +60,16 @@ class CharacterSheetApp {
   }
 
   private getCharacterData(): CharacterData {
-    const nameInput = document.getElementById('char-name') as HTMLInputElement;
-    const classInput = document.getElementById('char-class') as HTMLInputElement;
-    const levelInput = document.getElementById('char-level') as HTMLInputElement;
-    const raceInput = document.getElementById('char-race') as HTMLInputElement;
-
-    // Parse and validate level
-    const level = parseInt(levelInput?.value || '5');
-    const validLevel = Math.max(1, Math.min(20, isNaN(level) ? 5 : level));
+    const getValue = (id: string, defaultValue: string = '') => 
+      (document.getElementById(id) as HTMLInputElement)?.value || defaultValue;
+    
+    const level = Math.max(1, Math.min(20, parseInt(getValue('char-level', '5')) || 5));
 
     return {
-      name: nameInput?.value || 'Thorin Ironforge',
-      class: classInput?.value || 'Fighter',
-      level: validLevel,
-      race: raceInput?.value || 'Dwarf',
+      name: getValue('char-name', 'Thorin Ironforge'),
+      class: getValue('char-class', 'Fighter'),
+      level,
+      race: getValue('char-race', 'Dwarf'),
       background: 'Soldier',
       alignment: 'Lawful Good',
       experiencePoints: 6500,
@@ -130,15 +126,10 @@ class CharacterSheetApp {
       const theme = THEMES[this.currentTheme];
 
       if (!config) {
-        console.error(`Config not found: ${this.currentConfig}`);
-        this.showError(`Configuration '${this.currentConfig}' not found`);
-        return;
+        throw new Error(`Configuration '${this.currentConfig}' not found`);
       }
-
       if (!theme) {
-        console.error(`Theme not found: ${this.currentTheme}`);
-        this.showError(`Theme '${this.currentTheme}' not found`);
-        return;
+        throw new Error(`Theme '${this.currentTheme}' not found`);
       }
 
       const sheet = this.engine.generate(config, theme, charData);
@@ -150,17 +141,16 @@ class CharacterSheetApp {
 
       // Inject theme styles
       let styleEl = document.getElementById('character-sheet-styles') as HTMLStyleElement;
-      if (styleEl) {
-        styleEl.textContent = sheet.styles;
-      } else {
+      if (!styleEl) {
         styleEl = document.createElement('style');
         styleEl.id = 'character-sheet-styles';
-        styleEl.textContent = sheet.styles;
         document.head.appendChild(styleEl);
       }
+      styleEl.textContent = sheet.styles;
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       console.error('Error generating sheet:', error);
-      this.showError(`Failed to generate sheet: ${error instanceof Error ? error.message : String(error)}`);
+      this.showError(`Failed to generate sheet: ${message}`);
     }
   }
 
@@ -171,8 +161,7 @@ class CharacterSheetApp {
         <div style="padding: 2rem; background: #fee; border: 2px solid #c00; border-radius: 8px; color: #800;">
           <h3 style="margin: 0 0 1rem 0;">Error</h3>
           <p style="margin: 0;">${message}</p>
-        </div>
-      `;
+        </div>`;
     }
   }
 
