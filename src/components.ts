@@ -5,6 +5,8 @@ import { SheetEngine } from './sheet-engine';
 
 type Ability = 'strength' | 'dexterity' | 'constitution' | 'intelligence' | 'wisdom' | 'charisma';
 
+const ABILITY_ORDER: Ability[] = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+
 const ABILITY_LABELS: Record<Ability, string> = {
   strength: 'STR',
   dexterity: 'DEX',
@@ -82,7 +84,7 @@ export const COMPONENTS: Record<string, Component> = {
   // Ability scores block
   abilityScores: {
     render(config: SectionConfig, _theme: Theme, data: CharacterData): string {
-      const abilities = (config.abilities as Ability[]) || ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+      const abilities = (config.abilities as Ability[]) || ABILITY_ORDER;
 
       return `
         <div class="sheet-section">
@@ -149,13 +151,11 @@ export const COMPONENTS: Record<string, Component> = {
   // Saving throws
   savingThrows: {
     render(config: SectionConfig, _theme: Theme, data: CharacterData): string {
-      const abilities: Ability[] = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
-
       return `
         <div class="sheet-section">
           ${renderSectionHeader(config, 'Saving Throws')}
           <div class="skill-list">
-            ${abilities.map((ability) => renderSave(ability, data)).join('')}
+            ${ABILITY_ORDER.map((ability) => renderAbilityCheck(ability, data, ABILITY_FULL_NAMES[ability], data.savingThrows?.[ability])).join('')}
           </div>
         </div>`;
     },
@@ -301,27 +301,19 @@ function renderDeathSaves(data: CharacterData): string {
 
 function renderSkill(skill: Skill, data: CharacterData): string {
   const skillKey = skill.name.toLowerCase().replace(/ /g, '');
-  const skillData = data.skills?.[skillKey] || DEFAULT_PROFICIENCY;
-  const abilityMod = SheetEngine.calculateModifier(data[skill.ability] || 10);
-  const profBonus = skillData.proficient ? data.proficiencyBonus || 2 : 0;
-
-  return `
-    <div class="skill-item">
-      <div class="skill-checkbox ${skillData.proficient ? 'checked' : ''}"></div>
-      <div class="skill-name">${skill.name}</div>
-      <div class="skill-bonus">${SheetEngine.formatModifier(abilityMod + profBonus)}</div>
-    </div>`;
+  return renderAbilityCheck(skill.ability, data, skill.name, data.skills?.[skillKey]);
 }
 
-function renderSave(ability: Ability, data: CharacterData): string {
-  const saveData = data.savingThrows?.[ability] || DEFAULT_PROFICIENCY;
+function renderAbilityCheck(ability: Ability, data: CharacterData, label: string, checkData?: { proficient?: boolean }): string {
+  const profData = checkData || DEFAULT_PROFICIENCY;
   const abilityMod = SheetEngine.calculateModifier(data[ability] || 10);
-  const profBonus = saveData.proficient ? data.proficiencyBonus || 2 : 0;
+  const profBonus = profData.proficient ? data.proficiencyBonus || 2 : 0;
 
   return `
     <div class="skill-item">
-      <div class="skill-checkbox ${saveData.proficient ? 'checked' : ''}"></div>
-      <div class="skill-name">${ABILITY_FULL_NAMES[ability]}</div>
+      <div class="skill-checkbox ${profData.proficient ? 'checked' : ''}"></div>
+      <div class="skill-name">${label}</div>
       <div class="skill-bonus">${SheetEngine.formatModifier(abilityMod + profBonus)}</div>
     </div>`;
 }
+
