@@ -16,7 +16,7 @@ Config-driven D&D 5e character sheet generator built with TypeScript.
 # Install dependencies
 make install
 
-# Start dev server
+# Start dev server (opens at http://localhost:8080)
 make dev
 
 # Build for production
@@ -24,6 +24,19 @@ make build
 
 # Preview production build
 make preview
+
+# Type check
+make typecheck
+
+# Clean build artifacts
+make clean
+```
+
+Or use pnpm directly:
+```bash
+pnpm install
+pnpm dev
+pnpm build
 ```
 
 ## Project Structure
