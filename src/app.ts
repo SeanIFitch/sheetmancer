@@ -1,6 +1,6 @@
 // app.ts - Main application logic
 
-import { CharacterData, Config, Theme } from './types';
+import { CharacterData } from './types';
 import { SheetEngine } from './sheet-engine';
 import { COMPONENTS } from './components';
 import { CONFIGS } from './configs';
@@ -65,10 +65,14 @@ class CharacterSheetApp {
     const levelInput = document.getElementById('char-level') as HTMLInputElement;
     const raceInput = document.getElementById('char-race') as HTMLInputElement;
 
+    // Parse and validate level
+    const level = parseInt(levelInput?.value || '5');
+    const validLevel = Math.max(1, Math.min(20, isNaN(level) ? 5 : level));
+
     return {
       name: nameInput?.value || 'Thorin Ironforge',
       class: classInput?.value || 'Fighter',
-      level: parseInt(levelInput?.value || '5'),
+      level: validLevel,
       race: raceInput?.value || 'Dwarf',
       background: 'Soldier',
       alignment: 'Lawful Good',
@@ -120,36 +124,55 @@ class CharacterSheetApp {
   }
 
   public regenerateSheet(): void {
-    const charData = this.getCharacterData();
-    const config = CONFIGS[this.currentConfig];
-    const theme = THEMES[this.currentTheme];
+    try {
+      const charData = this.getCharacterData();
+      const config = CONFIGS[this.currentConfig];
+      const theme = THEMES[this.currentTheme];
 
-    if (!config) {
-      console.error(`Config not found: ${this.currentConfig}`);
-      return;
+      if (!config) {
+        console.error(`Config not found: ${this.currentConfig}`);
+        this.showError(`Configuration '${this.currentConfig}' not found`);
+        return;
+      }
+
+      if (!theme) {
+        console.error(`Theme not found: ${this.currentTheme}`);
+        this.showError(`Theme '${this.currentTheme}' not found`);
+        return;
+      }
+
+      const sheet = this.engine.generate(config, theme, charData);
+      const previewElement = document.getElementById('preview');
+
+      if (previewElement) {
+        previewElement.innerHTML = sheet.html;
+      }
+
+      // Inject theme styles
+      let styleEl = document.getElementById('character-sheet-styles') as HTMLStyleElement;
+      if (styleEl) {
+        styleEl.textContent = sheet.styles;
+      } else {
+        styleEl = document.createElement('style');
+        styleEl.id = 'character-sheet-styles';
+        styleEl.textContent = sheet.styles;
+        document.head.appendChild(styleEl);
+      }
+    } catch (error) {
+      console.error('Error generating sheet:', error);
+      this.showError(`Failed to generate sheet: ${error instanceof Error ? error.message : String(error)}`);
     }
+  }
 
-    if (!theme) {
-      console.error(`Theme not found: ${this.currentTheme}`);
-      return;
-    }
-
-    const sheet = this.engine.generate(config, theme, charData);
+  private showError(message: string): void {
     const previewElement = document.getElementById('preview');
-
     if (previewElement) {
-      previewElement.innerHTML = sheet.html;
-    }
-
-    // Inject theme styles
-    let styleEl = document.getElementById('character-sheet-styles') as HTMLStyleElement;
-    if (styleEl) {
-      styleEl.textContent = sheet.styles;
-    } else {
-      styleEl = document.createElement('style');
-      styleEl.id = 'character-sheet-styles';
-      styleEl.textContent = sheet.styles;
-      document.head.appendChild(styleEl);
+      previewElement.innerHTML = `
+        <div style="padding: 2rem; background: #fee; border: 2px solid #c00; border-radius: 8px; color: #800;">
+          <h3 style="margin: 0 0 1rem 0;">Error</h3>
+          <p style="margin: 0;">${message}</p>
+        </div>
+      `;
     }
   }
 

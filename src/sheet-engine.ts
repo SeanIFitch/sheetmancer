@@ -4,12 +4,25 @@ import { CharacterData, Theme, Config, SectionConfig, SheetGenerationResult, Pag
 
 export class SheetEngine {
   private components: Record<string, Component>;
+  private componentNames: string;
 
   constructor(components: Record<string, Component>) {
     this.components = components;
+    this.componentNames = Object.keys(components).join(', ');
   }
 
   generate(config: Config, theme: Theme, data: CharacterData): SheetGenerationResult {
+    // Input validation
+    if (!config || !config.sections) {
+      throw new Error('Invalid config: config and config.sections are required');
+    }
+    if (!theme) {
+      throw new Error('Invalid theme: theme is required');
+    }
+    if (!data) {
+      throw new Error('Invalid data: data is required');
+    }
+
     const html = this.renderSheet(config, theme, data);
     const styles = this.generateStyles(theme);
     return { html, styles };
@@ -28,7 +41,7 @@ export class SheetEngine {
       .join('');
   }
 
-  private layoutPages(config: Config, data: CharacterData): Page[] {
+  private layoutPages(config: Config, _data: CharacterData): Page[] {
     // Simple pagination - distribute sections across pages
     // In a more advanced version, this would measure content height
     const sectionsPerPage = config.sectionsPerPage || config.sections.length;
@@ -46,13 +59,23 @@ export class SheetEngine {
   private renderSections(sections: SectionConfig[], theme: Theme, data: CharacterData): string {
     return sections
       .map((section) => {
-        const component = this.components[section.component];
-        if (!component) {
-          console.warn(`Component ${section.component} not found`);
+        if (!section || !section.component) {
+          console.warn('Invalid section config: missing component name');
           return '';
         }
 
-        return component.render(section, theme, data);
+        const component = this.components[section.component];
+        if (!component) {
+          console.warn(`Component '${section.component}' not found. Available components: ${this.componentNames}`);
+          return '';
+        }
+
+        try {
+          return component.render(section, theme, data);
+        } catch (error) {
+          console.error(`Error rendering component '${section.component}':`, error);
+          return `<div class="sheet-section error">Error rendering ${section.component}</div>`;
+        }
       })
       .join('');
   }
