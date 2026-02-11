@@ -1,0 +1,29 @@
+{
+  "name": "dnd-character-sheet-generator",
+  "version": "2.0.0",
+  "description": "Config-driven D&D character sheet generator with TypeScript",
+  "main": "dist/app.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc && rollup -c",
+    "build:tsc": "tsc",
+    "dev": "tsc --watch",
+    "serve": "npx http-server -p 8080",
+    "start": "npm run build && npm run serve"
+  },
+  "keywords": [
+    "dnd",
+    "character-sheet",
+    "typescript",
+    "rpg"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "rollup": "^4.9.6",
+    "tslib": "^2.6.2",
+    "typescript": "^5.3.3"
+  }
+}
