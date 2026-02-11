@@ -1,15 +1,12 @@
 {
-  "name": "dnd-character-sheet-generator",
+  "name": "sheetmancer",
   "version": "2.0.0",
-  "description": "Config-driven D&D character sheet generator with TypeScript",
-  "main": "dist/app.js",
+  "description": "Config-driven D&D character sheet generator",
   "type": "module",
   "scripts": {
-    "build": "tsc && rollup -c",
-    "build:tsc": "tsc",
-    "dev": "tsc --watch",
-    "serve": "npx http-server -p 8080",
-    "start": "npm run build && npm run serve"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
   },
   "keywords": [
     "dnd",
@@ -20,10 +17,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "^15.2.3",
-    "@rollup/plugin-typescript": "^11.1.6",
-    "rollup": "^4.9.6",
-    "tslib": "^2.6.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.7.3",
+    "vite": "^6.0.11"
   }
 }
