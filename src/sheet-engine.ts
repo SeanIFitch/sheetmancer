@@ -4,11 +4,9 @@ import { CharacterData, Theme, Config, SectionConfig, SheetGenerationResult, Pag
 
 export class SheetEngine {
   private components: Record<string, Component>;
-  private componentNames: string;
 
   constructor(components: Record<string, Component>) {
     this.components = components;
-    this.componentNames = Object.keys(components).join(', ');
   }
 
   generate(config: Config, theme: Theme, data: CharacterData): SheetGenerationResult {
@@ -63,7 +61,7 @@ export class SheetEngine {
 
         const component = this.components[section.component];
         if (!component) {
-          console.warn(`Component '${section.component}' not found. Available: ${this.componentNames}`);
+          console.warn(`Component '${section.component}' not found. Available: ${Object.keys(this.components).join(', ')}`);
           return '';
         }
 
@@ -79,7 +77,6 @@ export class SheetEngine {
 
   private generateStyles(theme: Theme): string {
     const t = theme;
-    const conditionalStyle = (condition: string | undefined, style: string) => condition ? style : '';
 
     return `
       .character-sheet-page {
@@ -93,8 +90,8 @@ export class SheetEngine {
         font-family: ${t.typography.body.family};
         color: ${t.colors.text};
         page-break-after: always;
-        ${conditionalStyle(t.backgrounds.border, `border: ${t.backgrounds.border};`)}
-        ${conditionalStyle(t.backgrounds.shadow, `box-shadow: ${t.backgrounds.shadow};`)}
+        ${t.backgrounds.border ? `border: ${t.backgrounds.border};` : ''}
+        ${t.backgrounds.shadow ? `box-shadow: ${t.backgrounds.shadow};` : ''}
       }
 
       .character-sheet-page::before {

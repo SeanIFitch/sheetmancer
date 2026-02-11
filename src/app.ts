@@ -28,35 +28,18 @@ class CharacterSheetApp {
   }
 
   private setupEventListeners(): void {
-    const configSelect = document.getElementById('config-select') as HTMLSelectElement;
-    const themeSelect = document.getElementById('theme-select') as HTMLSelectElement;
-    const generateBtn = document.querySelector('[data-action="generate"]') as HTMLButtonElement;
-    const printBtn = document.querySelector('[data-action="print"]') as HTMLButtonElement;
-    const exportBtn = document.querySelector('[data-action="export"]') as HTMLButtonElement;
+    const listen = (selector: string, event: string, handler: () => void) => 
+      document.querySelector(selector)?.addEventListener(event, handler);
 
-    if (configSelect) {
-      configSelect.addEventListener('change', () => {
-        this.currentConfig = configSelect.value;
-      });
-    }
-
-    if (themeSelect) {
-      themeSelect.addEventListener('change', () => {
-        this.currentTheme = themeSelect.value;
-      });
-    }
-
-    if (generateBtn) {
-      generateBtn.addEventListener('click', () => this.regenerateSheet());
-    }
-
-    if (printBtn) {
-      printBtn.addEventListener('click', () => window.print());
-    }
-
-    if (exportBtn) {
-      exportBtn.addEventListener('click', () => this.exportConfig());
-    }
+    listen('#config-select', 'change', () => {
+      this.currentConfig = (document.getElementById('config-select') as HTMLSelectElement).value;
+    });
+    listen('#theme-select', 'change', () => {
+      this.currentTheme = (document.getElementById('theme-select') as HTMLSelectElement).value;
+    });
+    listen('[data-action="generate"]', 'click', () => this.regenerateSheet());
+    listen('[data-action="print"]', 'click', () => window.print());
+    listen('[data-action="export"]', 'click', () => this.exportConfig());
   }
 
   private getCharacterData(): CharacterData {
