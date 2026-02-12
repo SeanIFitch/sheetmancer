@@ -142,6 +142,22 @@ export class SheetEngine {
         min-height: 2em;
       }
 
+      .field-value[contenteditable="true"] {
+        cursor: text;
+        transition: all 0.2s;
+      }
+
+      .field-value[contenteditable="true"]:hover {
+        border-color: ${t.colors.primary};
+        box-shadow: 0 0 0 2px ${t.colors.primary}33;
+      }
+
+      .field-value[contenteditable="true"]:focus {
+        outline: none;
+        border-color: ${t.colors.primary};
+        box-shadow: 0 0 0 3px ${t.colors.primary}44;
+      }
+
       .stat-block {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
@@ -171,6 +187,20 @@ export class SheetEngine {
         font-weight: ${t.typography.stat.weight};
         color: ${t.colors.primary};
         line-height: 1;
+      }
+
+      .stat-value[contenteditable="true"] {
+        cursor: text;
+        transition: all 0.2s;
+      }
+
+      .stat-value[contenteditable="true"]:hover {
+        box-shadow: 0 0 0 2px ${t.colors.primary}33;
+      }
+
+      .stat-value[contenteditable="true"]:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px ${t.colors.primary}66;
       }
 
       .stat-modifier {
@@ -208,6 +238,13 @@ export class SheetEngine {
         border: 2px solid ${t.colors.border};
         border-radius: 3px;
         flex-shrink: 0;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .skill-checkbox:hover {
+        border-color: ${t.colors.primary};
+        transform: scale(1.1);
       }
 
       .skill-checkbox.checked {
@@ -264,6 +301,18 @@ export class SheetEngine {
         border: 2px solid ${t.colors.border};
         border-radius: 50%;
         background: ${t.colors.fieldBackground};
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .save-bubble:hover {
+        border-color: ${t.colors.primary};
+        transform: scale(1.1);
+      }
+
+      .save-bubble.filled {
+        background: ${t.colors.primary};
+        border-color: ${t.colors.primary};
       }
 
       .textarea-field {

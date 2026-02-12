@@ -73,6 +73,15 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (char) => HTML_ESCAPE_MAP[char]);
 }
 
+// Helper to safely get a field value from data, returning empty string if missing
+function getFieldValue(data: CharacterData, field: string): string {
+  const value = data[field];
+  if (value === null || value === undefined) {
+    return '';
+  }
+  return String(value);
+}
+
 // Helper to render list of items
 function renderItemList(items: string[], emptyMessage: string, itemClass: string): string {
   return items.length > 0 
@@ -113,36 +122,43 @@ export const COMPONENTS: Record<string, Component> = {
   // Combat statistics
   combatStats: {
     render(config: SectionConfig, _theme: Theme, data: CharacterData): string {
+      const armorClass = getFieldValue(data, 'armorClass') || '10';
+      const initiative = data.initiative !== undefined ? SheetEngine.formatModifier(data.initiative) : '+0';
+      const speed = getFieldValue(data, 'speed') || '30';
+      const hitPointMax = getFieldValue(data, 'hitPointMax') || '0';
+      const hitPointCurrent = getFieldValue(data, 'hitPointCurrent') || '0';
+      const hitDice = getFieldValue(data, 'hitDice') || '1d6';
+
       return `
         <div class="sheet-section">
           ${renderSectionHeader(config, 'Combat')}
           <div class="combat-stats">
             <div class="combat-stat">
               <div class="field-label">Armor Class</div>
-              <div class="stat-value">${data.armorClass || 10}</div>
+              <div class="stat-value" contenteditable="true" data-field="armorClass">${armorClass}</div>
             </div>
             <div class="combat-stat">
               <div class="field-label">Initiative</div>
-              <div class="stat-value">${SheetEngine.formatModifier(data.initiative || 0)}</div>
+              <div class="stat-value" contenteditable="true" data-field="initiative">${initiative}</div>
             </div>
             <div class="combat-stat">
               <div class="field-label">Speed</div>
-              <div class="stat-value">${data.speed || 30} ft</div>
+              <div class="stat-value" contenteditable="true" data-field="speed">${speed} ft</div>
             </div>
           </div>
           <div class="hp-tracker">
             <div class="field-group">
               <div class="field-label">Hit Point Maximum</div>
-              <div class="field-value">${data.hitPointMax || 0}</div>
+              <div class="field-value" contenteditable="true" data-field="hitPointMax">${hitPointMax}</div>
             </div>
             <div class="field-group">
               <div class="field-label">Current Hit Points</div>
-              <div class="field-value">${data.hitPointCurrent || 0}</div>
+              <div class="field-value" contenteditable="true" data-field="hitPointCurrent">${hitPointCurrent}</div>
             </div>
           </div>
           <div class="field-group">
             <div class="field-label">Hit Dice</div>
-            <div class="field-value">${data.hitDice || '1d6'}</div>
+            <div class="field-value" contenteditable="true" data-field="hitDice">${hitDice}</div>
           </div>
           ${config.showDeathSaves !== false ? renderDeathSaves(data) : ''}
         </div>`;
@@ -205,13 +221,13 @@ export const COMPONENTS: Record<string, Component> = {
   textArea: {
     render(config: SectionConfig, _theme: Theme, data: CharacterData): string {
       const fieldName = (config.field as string) || 'notes';
-      const content = data[fieldName] || '';
-      const escapedContent = typeof content === 'string' ? escapeHtml(content) : content;
+      const content = getFieldValue(data, fieldName);
+      const escapedContent = escapeHtml(content);
 
       return `
         <div class="sheet-section">
           ${renderSectionHeader(config, 'Notes')}
-          <div class="field-value textarea-field">${escapedContent}</div>
+          <div class="field-value textarea-field" contenteditable="true" data-field="${fieldName}">${escapedContent}</div>
         </div>`;
     },
   },
@@ -240,8 +256,8 @@ export const COMPONENTS: Record<string, Component> = {
   // Proficiency and passive scores
   proficiencyBlock: {
     render(config: SectionConfig, _theme: Theme, data: CharacterData): string {
-      const wisdomMod = SheetEngine.calculateModifier(data.wisdom || 10);
-      const profBonus = data.proficiencyBonus || 2;
+      const wisdomMod = SheetEngine.calculateModifier(data.wisdom ?? 10);
+      const profBonus = data.proficiencyBonus ?? 2;
       const perceptionProf = data.skills?.perception?.proficient ? profBonus : 0;
       const passivePerception = 10 + wisdomMod + perceptionProf;
 
@@ -251,7 +267,7 @@ export const COMPONENTS: Record<string, Component> = {
           <div class="info-row">
             <div class="field-group">
               <div class="field-label">Proficiency Bonus</div>
-              <div class="field-value">${SheetEngine.formatModifier(profBonus)}</div>
+              <div class="field-value" contenteditable="true" data-field="proficiencyBonus">${SheetEngine.formatModifier(profBonus)}</div>
             </div>
             <div class="field-group">
               <div class="field-label">Passive Perception</div>
@@ -268,6 +284,7 @@ export const COMPONENTS: Record<string, Component> = {
 function renderHeaderField(field: string, data: CharacterData): string {
   const labels: Record<string, string> = {
     name: 'Character Name',
+    playerName: 'Player Name',
     class: 'Class',
     level: 'Level',
     race: 'Race',
@@ -276,43 +293,49 @@ function renderHeaderField(field: string, data: CharacterData): string {
     experiencePoints: 'Experience Points',
   };
 
-  const value = data[field] || '';
-  const escapedValue = typeof value === 'string' ? escapeHtml(value) : value;
+  const value = getFieldValue(data, field);
+  const escapedValue = escapeHtml(value);
 
   return `
     <div class="field-group">
       <div class="field-label">${labels[field] || field}</div>
-      <div class="field-value">${escapedValue}</div>
+      <div class="field-value" contenteditable="true" data-field="${field}">${escapedValue}</div>
     </div>`;
 }
 
 function renderAbility(ability: Ability, data: CharacterData): string {
-  const score = data[ability] || 10;
+  const score = data[ability] ?? 10;
   const modifier = SheetEngine.calculateModifier(score);
 
   return `
     <div class="stat-item">
       <div class="stat-name">${ABILITY_LABELS[ability]}</div>
-      <div class="stat-value">${score}</div>
+      <div class="stat-value" contenteditable="true" data-field="${ability}">${score}</div>
       <div class="stat-modifier">${SheetEngine.formatModifier(modifier)}</div>
     </div>`;
 }
 
 function renderDeathSaves(data: CharacterData): string {
-  const saves = data.deathSaves || { successes: 0, failures: 0 };
-  const renderSaveTrackBubbles = (count: number) => [1, 2, 3]
-    .map((i) => `<div class="save-bubble ${i <= count ? 'filled' : ''}"></div>`)
+  const saves = data.deathSaves ?? { successes: 0, failures: 0 };
+  const successes = saves.successes ?? 0;
+  const failures = saves.failures ?? 0;
+  
+  const renderSaveTrackBubbles = (type: 'success' | 'failure', count: number) => [1, 2, 3]
+    .map((i) => `<div class="save-bubble ${i <= count ? 'filled' : ''}" 
+                      data-save-type="${type}" 
+                      data-save-index="${i}"
+                      onclick="toggleDeathSave(this, '${type}', ${i})"></div>`)
     .join('');
 
   return `
     <div class="death-saves">
       <div>
         <div class="field-label">Death Save Successes</div>
-        <div class="save-track">${renderSaveTrackBubbles(saves.successes)}</div>
+        <div class="save-track">${renderSaveTrackBubbles('success', successes)}</div>
       </div>
       <div>
         <div class="field-label">Death Save Failures</div>
-        <div class="save-track">${renderSaveTrackBubbles(saves.failures)}</div>
+        <div class="save-track">${renderSaveTrackBubbles('failure', failures)}</div>
       </div>
     </div>`;
 }
@@ -324,14 +347,25 @@ function renderSkill(skill: Skill, data: CharacterData): string {
 
 function renderAbilityCheck(ability: Ability, data: CharacterData, label: string, checkData?: { proficient?: boolean }): string {
   const profData = checkData || DEFAULT_PROFICIENCY;
-  const abilityMod = SheetEngine.calculateModifier(data[ability] || 10);
-  const profBonus = profData.proficient ? data.proficiencyBonus || 2 : 0;
+  const abilityMod = SheetEngine.calculateModifier(data[ability] ?? 10);
+  const profBonus = profData.proficient ? (data.proficiencyBonus ?? 2) : 0;
+  const skillKey = label.toLowerCase().replace(/ /g, '');
 
   return `
     <div class="skill-item">
-      <div class="skill-checkbox ${profData.proficient ? 'checked' : ''}"></div>
+      <div class="skill-checkbox ${profData.proficient ? 'checked' : ''}" 
+           data-field="skill-${skillKey}" 
+           data-proficient="${profData.proficient ? 'true' : 'false'}"
+           onclick="this.classList.toggle('checked'); this.dataset.proficient = this.classList.contains('checked') ? 'true' : 'false';"></div>
       <div class="skill-name">${label}</div>
       <div class="skill-bonus">${SheetEngine.formatModifier(abilityMod + profBonus)}</div>
     </div>`;
+}
+
+// Declare global function for death save toggling (attached to window in app.tsx)
+declare global {
+  interface Window {
+    toggleDeathSave: (element: HTMLElement, type: string, index: number) => void;
+  }
 }
 
