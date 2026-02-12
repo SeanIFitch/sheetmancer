@@ -66,6 +66,13 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick, depth = 0 }: Dr
   const isDragging = active?.data.current?.source === 'palette';
   const isPlaceholder = placeholder === '';
   
+  // Reset mouse position when drag ends or hover stops
+  React.useEffect(() => {
+    if (!isOver || !isDragging) {
+      setMousePos(null);
+    }
+  }, [isOver, isDragging]);
+  
   // Calculate split info based on mouse position
   let splitDirection: 'horizontal' | 'vertical' = 'horizontal';
   let isAfter = true;
@@ -80,11 +87,11 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick, depth = 0 }: Dr
     isAfter = splitDirection === 'horizontal' ? mousePos.x > centerX : mousePos.y > centerY;
   }
   
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleMouseMove = React.useCallback((e: React.MouseEvent) => {
     if (isDragging && isOver) {
       setMousePos({ x: e.clientX, y: e.clientY });
     }
-  };
+  }, [isDragging, isOver]);
   
   return (
     <div

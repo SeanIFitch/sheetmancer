@@ -10,11 +10,14 @@ function App() {
   const lastMousePosRef = useRef<{ x: number; y: number } | null>(null);
   
   function handleDragMove(event: DragMoveEvent) {
-    const mouseEvent = event.activatorEvent as MouseEvent;
-    lastMousePosRef.current = {
-      x: mouseEvent.clientX + event.delta.x,
-      y: mouseEvent.clientY + event.delta.y,
-    };
+    const mouseEvent = event.activatorEvent;
+    // Only handle mouse/pointer events
+    if ('clientX' in mouseEvent && 'clientY' in mouseEvent) {
+      lastMousePosRef.current = {
+        x: mouseEvent.clientX + event.delta.x,
+        y: mouseEvent.clientY + event.delta.y,
+      };
+    }
   }
   
   function handleDragEnd(event: DragEndEvent) {
