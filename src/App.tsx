@@ -25,14 +25,21 @@ function App() {
     setLayout(prev => updateSplitRatio(prev, splitId, newRatio));
   }
   
+  function handleClearLayout() {
+    setLayout(createInitialLayout());
+  }
+  
   return (
     <DndContext onDragEnd={handleDragEnd}>
       <div style={{ display: 'flex', gap: 16, padding: 16 }}>
         <ComponentPalette />
-        <LayoutRenderer 
-          page={layout.pages[0]} 
-          onRatioChange={handleRatioChange}
-        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <button onClick={handleClearLayout}>Clear Layout</button>
+          <LayoutRenderer 
+            page={layout.pages[0]} 
+            onRatioChange={handleRatioChange}
+          />
+        </div>
       </div>
     </DndContext>
   );
@@ -47,7 +54,7 @@ function createInitialLayout(): SheetLayout {
       root: {
         type: 'leaf',
         id: crypto.randomUUID(),
-        placeholder: 'empty',
+        placeholder: '',
       }
     }]
   };

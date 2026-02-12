@@ -1,4 +1,4 @@
-import { useDroppable } from '@dnd-kit/core';
+import { useDroppable, useDndContext } from '@dnd-kit/core';
 import type { PageLayout, LayoutNode } from '../types/layout';
 import { calculateLayout } from '../engine/yogaEngine';
 import { ResizableSplit } from './ResizableSplit';
@@ -59,6 +59,9 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick }: DroppableNode
     id: id,
     data: { nodeId: id },
   });
+  const { active } = useDndContext();
+  
+  const isDragging = active?.data.current?.source === 'palette';
   
   return (
     <div
@@ -76,9 +79,11 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick }: DroppableNode
         justifyContent: 'center',
         pointerEvents: 'auto',
         zIndex: 1,
+        boxSizing: 'border-box',
+        backgroundColor: isOver && isDragging ? 'rgba(0, 0, 255, 0.1)' : 'transparent',
       }}
     >
-      {placeholder || id}
+      {placeholder}
     </div>
   );
 }
