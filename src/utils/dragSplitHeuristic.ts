@@ -94,6 +94,11 @@ export function calculateEdgeCenterSplit(
       direction = 'horizontal';
       isAfter = true; // New panel goes after (right)
       break;
+    default:
+      // Should never happen, but provide safe fallback
+      direction = 'horizontal';
+      isAfter = true;
+      break;
   }
 
   return {
@@ -101,14 +106,4 @@ export function calculateEdgeCenterSplit(
     isAfter,
     edge: closest.edge,
   };
-}
-
-/**
- * Get the dynamic offset of a layout element relative to the viewport
- * 
- * @param element - The layout container element
- * @returns The bounding client rect of the element
- */
-export function getLayoutOffset(element: HTMLElement | null): DOMRect | null {
-  return element?.getBoundingClientRect() ?? null;
 }
