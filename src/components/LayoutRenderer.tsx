@@ -84,9 +84,11 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick, depth = 0 }: Dr
         zIndex: 1,
         boxSizing: 'border-box',
         backgroundColor: isOver && isDragging ? 'rgba(0, 0, 255, 0.1)' : 'transparent',
+        color: '#999',
+        fontSize: '14px',
       }}
     >
-      {placeholder}
+      {placeholder || (isDragging ? 'Drop here' : '')}
       {isOver && isDragging && (
         <div
           style={{
