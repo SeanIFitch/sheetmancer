@@ -154,8 +154,8 @@ function CharacterSheetApp() {
     URL.revokeObjectURL(url);
   };
 
-  // Helper to update character data field
-  const updateCharacterField = (field: string, value: any) => {
+  // Helper to update character data field with type safety
+  const updateCharacterField = <K extends keyof CharacterData>(field: K, value: CharacterData[K]) => {
     setCharacterData(prev => ({
       ...prev,
       [field]: value

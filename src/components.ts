@@ -74,8 +74,8 @@ function escapeHtml(text: string): string {
 }
 
 // Helper to safely get a field value from data, returning empty string if missing
-function getFieldValue(data: CharacterData, field: string): string {
-  const value = data[field];
+function getFieldValue(data: CharacterData, field: keyof CharacterData | string): string {
+  const value = data[field as keyof CharacterData];
   if (value === null || value === undefined) {
     return '';
   }
