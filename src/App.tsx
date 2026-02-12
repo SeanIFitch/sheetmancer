@@ -1,9 +1,21 @@
-import { DndContext, DragEndEvent, DragMoveEvent, useDndMonitor } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, DragMoveEvent } from '@dnd-kit/core';
 import { useState, useRef } from 'react';
-import type { SheetLayout } from './types/layout';
+import type {LayoutNode, SheetLayout} from './types/layout';
 import { ComponentPalette } from './components/ComponentPalette';
 import { LayoutRenderer } from './components/LayoutRenderer';
 import { splitNode, updateSplitRatio } from './utils/layoutOperations';
+
+function layoutTreeToString(node: LayoutNode, indent = ""): string {
+  if ("children" in node) {
+    let str = `${indent}- SplitNode (id: ${node.id}, direction: ${node.direction})\n`;
+    for (const child of node.children) {
+      str += layoutTreeToString(child, indent + "  ");
+    }
+    return str;
+  } else {
+    return `${indent}- LeafNode (id: ${node.id}, placeholder: ${node.component})\n`;
+  }
+}
 
 function App() {
   const [layout, setLayout] = useState<SheetLayout>(() => createInitialLayout());
@@ -62,15 +74,21 @@ function App() {
   function handleClearLayout() {
     setLayout(createInitialLayout());
   }
-  
+
   return (
     <DndContext onDragMove={handleDragMove} onDragEnd={handleDragEnd}>
-      <ComponentPalette />
-      <button onClick={handleClearLayout}>Clear Layout</button>
-      <LayoutRenderer
-        page={layout.pages[0]}
-        onRatioChange={handleRatioChange}
-      />
+      <div style={{ display: 'flex' }}>
+        <div>
+          <ComponentPalette />
+          <button onClick={handleClearLayout}>Clear Layout</button>
+          <pre>{layoutTreeToString(layout.pages[0].root)}</pre>
+        </div>
+
+        <LayoutRenderer
+          page={layout.pages[0]}
+          onRatioChange={handleRatioChange}
+        />
+      </div>
     </DndContext>
   );
 }
@@ -84,7 +102,7 @@ function createInitialLayout(): SheetLayout {
       root: {
         type: 'leaf',
         id: crypto.randomUUID(),
-        placeholder: '',
+        component: undefined,
       }
     }]
   };

@@ -18,11 +18,11 @@ export function splitNode(
     if (node.type !== 'leaf') return node;
     
     // If this is an initial placeholder (empty string), replace it directly
-    if (node.placeholder === '') {
+    if (node.component === '') {
       return {
         type: 'leaf',
         id: node.id,
-        placeholder: newPlaceholder,
+        component: newPlaceholder,
       };
     }
     
@@ -30,7 +30,7 @@ export function splitNode(
     const newLeaf: LeafNode = {
       type: 'leaf',
       id: crypto.randomUUID(),
-      placeholder: newPlaceholder,
+      component: newPlaceholder,
     };
     
     // Create new split with original node and new leaf

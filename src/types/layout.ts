@@ -30,7 +30,7 @@ export interface SplitNode {
 export interface LeafNode {
   type: 'leaf';
   id: string;
-  placeholder: string; // e.g., "checkbox", "text", "abilities"
+  component: string | undefined;
 }
 
 /**

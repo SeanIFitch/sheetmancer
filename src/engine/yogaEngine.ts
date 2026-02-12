@@ -64,7 +64,7 @@ function extractLayout(yogaNode: Node, configNode: LayoutNode, depth: number = 0
         width: layout.width,
         height: layout.height,
       },
-      placeholder: configNode.placeholder,
+      placeholder: configNode.component,
       depth,
     }];
   }
