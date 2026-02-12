@@ -1,4 +1,5 @@
 import { useDroppable, useDndContext } from '@dnd-kit/core';
+import React from 'react';
 import type { PageLayout, LayoutNode } from '../types/layout';
 import { calculateLayout } from '../engine/yogaEngine';
 import { ResizableSplit } from './ResizableSplit';
@@ -60,14 +61,36 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick, depth = 0 }: Dr
     data: { nodeId: id },
   });
   const { active } = useDndContext();
+  const [mousePos, setMousePos] = React.useState<{ x: number; y: number } | null>(null);
   
   const isDragging = active?.data.current?.source === 'palette';
-  const splitDirection = depth % 2 === 0 ? 'horizontal' : 'vertical';
+  const isPlaceholder = placeholder === '';
+  
+  // Calculate split info based on mouse position
+  let splitDirection: 'horizontal' | 'vertical' = 'horizontal';
+  let isAfter = true;
+  
+  if (mousePos && !isPlaceholder) {
+    const centerX = bounds.left + bounds.width / 2;
+    const centerY = bounds.top + bounds.height / 2;
+    const deviationX = Math.abs(mousePos.x - centerX) / (bounds.width / 2);
+    const deviationY = Math.abs(mousePos.y - centerY) / (bounds.height / 2);
+    
+    splitDirection = deviationX > deviationY ? 'horizontal' : 'vertical';
+    isAfter = splitDirection === 'horizontal' ? mousePos.x > centerX : mousePos.y > centerY;
+  }
+  
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDragging && isOver) {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    }
+  };
   
   return (
     <div
       ref={setNodeRef}
       onClick={onClick}
+      onMouseMove={handleMouseMove}
       style={{
         position: 'absolute',
         left: bounds.left,
@@ -87,7 +110,7 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick, depth = 0 }: Dr
       }}
     >
       {placeholder || ('UNDEFINED')}
-      {isOver && isDragging && (
+      {isOver && isDragging && !isPlaceholder && (
         <div
           style={{
             position: 'absolute',
@@ -100,6 +123,20 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick, depth = 0 }: Dr
             flexDirection: splitDirection === 'horizontal' ? 'row' : 'column',
           }}
         >
+          {!isAfter && (
+            <div style={{
+              flex: 1,
+              border: '2px dashed green',
+              backgroundColor: 'rgba(0, 255, 0, 0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '12px',
+              color: '#666',
+            }}>
+              New
+            </div>
+          )}
           <div style={{
             flex: 1,
             border: '2px dashed blue',
@@ -112,18 +149,41 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick, depth = 0 }: Dr
           }}>
             Current
           </div>
-          <div style={{
-            flex: 1,
-            border: '2px dashed green',
-            backgroundColor: 'rgba(0, 255, 0, 0.05)',
+          {isAfter && (
+            <div style={{
+              flex: 1,
+              border: '2px dashed green',
+              backgroundColor: 'rgba(0, 255, 0, 0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '12px',
+              color: '#666',
+            }}>
+              New
+            </div>
+          )}
+        </div>
+      )}
+      {isOver && isDragging && isPlaceholder && (
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            border: '2px dashed green',
+            backgroundColor: 'rgba(0, 255, 0, 0.1)',
             fontSize: '12px',
             color: '#666',
-          }}>
-            New
-          </div>
+          }}
+        >
+          Replace
         </div>
       )}
     </div>
