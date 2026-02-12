@@ -31,6 +31,7 @@ export function LayoutRenderer({ page, onNodeClick, onRatioChange }: Props) {
           bounds={result.bounds}
           placeholder={result.placeholder}
           onClick={() => onNodeClick?.(result.id)}
+          depth={result.depth}
         />
       ))}
       {onRatioChange && splits.map(split => (
@@ -52,9 +53,10 @@ interface DroppableNodeProps {
   bounds: { left: number; top: number; width: number; height: number };
   placeholder?: string;
   onClick?: () => void;
+  depth?: number;
 }
 
-function DroppableLayoutNode({ id, bounds, placeholder, onClick }: DroppableNodeProps) {
+function DroppableLayoutNode({ id, bounds, placeholder, onClick, depth = 0 }: DroppableNodeProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: id,
     data: { nodeId: id },
@@ -62,6 +64,7 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick }: DroppableNode
   const { active } = useDndContext();
   
   const isDragging = active?.data.current?.source === 'palette';
+  const splitDirection = depth % 2 === 0 ? 'horizontal' : 'vertical';
   
   return (
     <div
@@ -84,6 +87,45 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick }: DroppableNode
       }}
     >
       {placeholder}
+      {isOver && isDragging && (
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            display: 'flex',
+            flexDirection: splitDirection === 'horizontal' ? 'row' : 'column',
+          }}
+        >
+          <div style={{
+            flex: 1,
+            border: '2px dashed blue',
+            backgroundColor: 'rgba(0, 0, 255, 0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '12px',
+            color: '#666',
+          }}>
+            Current
+          </div>
+          <div style={{
+            flex: 1,
+            border: '2px dashed green',
+            backgroundColor: 'rgba(0, 255, 0, 0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '12px',
+            color: '#666',
+          }}>
+            New
+          </div>
+        </div>
+      )}
     </div>
   );
 }
