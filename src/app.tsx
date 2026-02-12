@@ -193,7 +193,17 @@ function CharacterSheetApp() {
             type="number"
             id="char-level"
             value={characterLevel}
-            onChange={(e) => setCharacterLevel(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
+            onChange={(e) => {
+              const value = parseInt(e.target.value);
+              if (!isNaN(value)) {
+                setCharacterLevel(Math.max(1, Math.min(20, value)));
+              }
+            }}
+            onBlur={(e) => {
+              if (e.target.value === '' || isNaN(parseInt(e.target.value))) {
+                setCharacterLevel(1);
+              }
+            }}
             min="1"
             max="20"
           />
