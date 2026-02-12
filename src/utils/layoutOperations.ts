@@ -14,11 +14,15 @@ export function splitNode(
   const replaced = replaceNode(newLayout.pages[0].root, targetId, (node) => {
     if (node.type !== 'leaf') return node;
     
+    // Determine split direction by counting parent splits
+    const depth = getNodeDepth(newLayout.pages[0].root, targetId) ?? 0;
+    const direction = depth % 2 === 0 ? 'horizontal' : 'vertical';
+    
     // Create new split with original node and new leaf
     const newSplit: SplitNode = {
       type: 'split',
       id: crypto.randomUUID(),
-      direction: Math.random() > 0.5 ? 'horizontal' : 'vertical',
+      direction,
       ratio: 0.5,
       children: [
         node,
@@ -122,17 +126,37 @@ function updateNodeRatio(
   }
   
   if (node.type === 'split') {
-    const updated = updateNodeRatio(node.children[0], splitId, newRatio);
-    if (updated) {
-      node.children[0] = updated;
+    const updatedFirstChild = updateNodeRatio(node.children[0], splitId, newRatio);
+    if (updatedFirstChild) {
+      node.children[0] = updatedFirstChild;
       return node;
     }
     
-    const updated2 = updateNodeRatio(node.children[1], splitId, newRatio);
-    if (updated2) {
-      node.children[1] = updated2;
+    const updatedSecondChild = updateNodeRatio(node.children[1], splitId, newRatio);
+    if (updatedSecondChild) {
+      node.children[1] = updatedSecondChild;
       return node;
     }
+  }
+  
+  return null;
+}
+
+/**
+ * Get the depth of a node in the tree (number of split ancestors)
+ * Returns null if node is not found
+ */
+function getNodeDepth(node: LayoutNode, targetId: string, depth: number = 0): number | null {
+  if (node.id === targetId) {
+    return depth;
+  }
+  
+  if (node.type === 'split') {
+    const leftDepth = getNodeDepth(node.children[0], targetId, depth + 1);
+    if (leftDepth !== null) return leftDepth;
+    
+    const rightDepth = getNodeDepth(node.children[1], targetId, depth + 1);
+    if (rightDepth !== null) return rightDepth;
   }
   
   return null;
