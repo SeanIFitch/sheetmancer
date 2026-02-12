@@ -200,10 +200,8 @@ function CharacterSheetApp() {
               const value = parseInt(e.target.value);
               if (!isNaN(value)) {
                 setCharacterLevel(clampLevel(value));
-              }
-            }}
-            onBlur={(e) => {
-              if (e.target.value === '' || isNaN(parseInt(e.target.value))) {
+              } else if (e.target.value === '') {
+                // Allow empty input temporarily while typing
                 setCharacterLevel(1);
               }
             }}

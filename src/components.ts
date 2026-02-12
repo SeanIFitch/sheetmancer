@@ -54,6 +54,15 @@ const SKILLS: Skill[] = [
 // Default proficiency data to avoid creating new objects repeatedly
 const DEFAULT_PROFICIENCY = { proficient: false };
 
+// HTML escape map for XSS prevention
+const HTML_ESCAPE_MAP: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#039;'
+};
+
 // Helper to render section header
 function renderSectionHeader(config: SectionConfig, defaultTitle: string): string {
   return config.showHeader !== false ? `<div class="section-header">${escapeHtml(config.title || defaultTitle)}</div>` : '';
@@ -61,14 +70,7 @@ function renderSectionHeader(config: SectionConfig, defaultTitle: string): strin
 
 // Helper to escape HTML to prevent XSS (efficient single-pass version)
 function escapeHtml(text: string): string {
-  const htmlEscapeMap: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  };
-  return text.replace(/[&<>"']/g, (char) => htmlEscapeMap[char]);
+  return text.replace(/[&<>"']/g, (char) => HTML_ESCAPE_MAP[char]);
 }
 
 // Helper to render list of items
