@@ -1,5 +1,5 @@
-import { DndContext, DragEndEvent } from '@dnd-kit/core';
-import { useState } from 'react';
+import { DndContext, DragEndEvent, DragMoveEvent, useDndMonitor } from '@dnd-kit/core';
+import { useState, useRef } from 'react';
 import type { SheetLayout } from './types/layout';
 import { ComponentPalette } from './components/ComponentPalette';
 import { LayoutRenderer } from './components/LayoutRenderer';
@@ -7,6 +7,18 @@ import { splitNode, updateSplitRatio } from './utils/layoutOperations';
 
 function App() {
   const [layout, setLayout] = useState<SheetLayout>(() => createInitialLayout());
+  const dragMousePositionRef = useRef<{ x: number; y: number } | null>(null);
+  
+  function handleDragMove(event: DragMoveEvent) {
+    const mouseEvent = event.activatorEvent;
+    // Only handle mouse/pointer events
+    if ('clientX' in mouseEvent && 'clientY' in mouseEvent) {
+      dragMousePositionRef.current = {
+        x: mouseEvent.clientX + event.delta.x,
+        y: mouseEvent.clientY + event.delta.y,
+      };
+    }
+  }
   
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -16,9 +28,31 @@ function App() {
     const targetNodeId = over.data.current?.nodeId;
     const componentType = active.data.current?.type;
     
-    if (targetNodeId && componentType) {
-      setLayout(prev => splitNode(prev, targetNodeId, componentType));
+    if (targetNodeId && componentType && dragMousePositionRef.current) {
+      const mouseX = dragMousePositionRef.current.x;
+      const mouseY = dragMousePositionRef.current.y;
+      
+      // Get target bounds
+      const targetRect = over.rect;
+      const targetCenterX = targetRect.left + targetRect.width / 2;
+      const targetCenterY = targetRect.top + targetRect.height / 2;
+      
+      // Calculate percentage deviations from center
+      const deviationX = Math.abs(mouseX - targetCenterX) / (targetRect.width / 2);
+      const deviationY = Math.abs(mouseY - targetCenterY) / (targetRect.height / 2);
+      
+      // Determine split direction based on highest deviation
+      const splitDirection = deviationX > deviationY ? 'horizontal' : 'vertical';
+      
+      // Determine which side the new node should be on
+      const isAfter = splitDirection === 'horizontal' 
+        ? mouseX > targetCenterX 
+        : mouseY > targetCenterY;
+      
+      setLayout(prev => splitNode(prev, targetNodeId, componentType, splitDirection, isAfter));
     }
+    
+    dragMousePositionRef.current = null;
   }
   
   function handleRatioChange(splitId: string, newRatio: number) {
@@ -30,7 +64,7 @@ function App() {
   }
   
   return (
-    <DndContext onDragEnd={handleDragEnd}>
+    <DndContext onDragMove={handleDragMove} onDragEnd={handleDragEnd}>
       <ComponentPalette />
       <button onClick={handleClearLayout}>Clear Layout</button>
       <LayoutRenderer

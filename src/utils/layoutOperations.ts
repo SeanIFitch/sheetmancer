@@ -1,12 +1,15 @@
 import type { SheetLayout, LayoutNode, SplitNode, LeafNode } from '../types/layout';
 
 /**
- * Replace a leaf node with a split containing the original + new node
+ * Replace a leaf node with a split containing the original + new node,
+ * or replace initial placeholder node directly
  */
 export function splitNode(
   layout: SheetLayout,
   targetId: string,
-  newPlaceholder: string
+  newPlaceholder: string,
+  splitDirection: 'horizontal' | 'vertical',
+  isAfter: boolean
 ): SheetLayout {
   const newLayout = structuredClone(layout);
   
@@ -14,24 +17,30 @@ export function splitNode(
   const replaced = replaceNode(newLayout.pages[0].root, targetId, (node) => {
     if (node.type !== 'leaf') return node;
     
-    // Determine split direction by counting parent splits
-    const depth = getNodeDepth(newLayout.pages[0].root, targetId) ?? 0;
-    const direction = depth % 2 === 0 ? 'horizontal' : 'vertical';
+    // If this is an initial placeholder (empty string), replace it directly
+    if (node.placeholder === '') {
+      return {
+        type: 'leaf',
+        id: node.id,
+        placeholder: newPlaceholder,
+      };
+    }
+    
+    // Create new leaf for the new component
+    const newLeaf: LeafNode = {
+      type: 'leaf',
+      id: crypto.randomUUID(),
+      placeholder: newPlaceholder,
+    };
     
     // Create new split with original node and new leaf
+    // Order based on whether new node should be after or before
     const newSplit: SplitNode = {
       type: 'split',
       id: crypto.randomUUID(),
-      direction,
+      direction: splitDirection,
       ratio: 0.5,
-      children: [
-        node,
-        {
-          type: 'leaf',
-          id: crypto.randomUUID(),
-          placeholder: newPlaceholder,
-        }
-      ]
+      children: isAfter ? [node, newLeaf] : [newLeaf, node]
     };
     
     return newSplit;
