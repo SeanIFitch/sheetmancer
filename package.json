@@ -1,0 +1,19 @@
+{
+  "name": "sheetmancer",
+  "version": "2.0.0",
+  "description": "Config-driven D&D character sheet generator",
+  "type": "module",
+  "packageManager": "pnpm@10.29.3",
+  "keywords": [
+    "dnd",
+    "character-sheet",
+    "typescript",
+    "rpg"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "vite": "^6.0.11"
+  }
+}
