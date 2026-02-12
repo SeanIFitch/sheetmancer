@@ -1,0 +1,56 @@
+import { DndContext, DragEndEvent } from '@dnd-kit/core';
+import { useState } from 'react';
+import type { SheetLayout } from './types/layout';
+import { ComponentPalette } from './components/ComponentPalette';
+import { LayoutRenderer } from './components/LayoutRenderer';
+import { splitNode, updateSplitRatio } from './utils/layoutOperations';
+
+function App() {
+  const [layout, setLayout] = useState<SheetLayout>(() => createInitialLayout());
+  
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    
+    if (!over || active.data.current?.source !== 'palette') return;
+    
+    const targetNodeId = over.data.current?.nodeId;
+    const componentType = active.data.current?.type;
+    
+    if (targetNodeId && componentType) {
+      setLayout(prev => splitNode(prev, targetNodeId, componentType));
+    }
+  }
+  
+  function handleRatioChange(splitId: string, newRatio: number) {
+    setLayout(prev => updateSplitRatio(prev, splitId, newRatio));
+  }
+  
+  return (
+    <DndContext onDragEnd={handleDragEnd}>
+      <div style={{ display: 'flex', gap: 16, padding: 16 }}>
+        <ComponentPalette />
+        <LayoutRenderer 
+          page={layout.pages[0]} 
+          onRatioChange={handleRatioChange}
+        />
+      </div>
+    </DndContext>
+  );
+}
+
+function createInitialLayout(): SheetLayout {
+  return {
+    pages: [{
+      id: crypto.randomUUID(),
+      width: 816,
+      height: 1056,
+      root: {
+        type: 'leaf',
+        id: crypto.randomUUID(),
+        placeholder: 'empty',
+      }
+    }]
+  };
+}
+
+export default App;
