@@ -180,61 +180,12 @@
             <p>Config-driven character sheet generation with theme support (TypeScript Edition)</p>
         </div>
 
-        <div class="editor-main">
-            <div class="controls-panel">
-                <div class="control-group">
-                    <label>Config Template</label>
-                    <select id="config-select">
-                        <option value="standard">Standard 5e Sheet</option>
-                        <option value="minimal">Minimal Sheet</option>
-                        <option value="detailed">Detailed Sheet</option>
-                    </select>
-                </div>
-
-                <div class="control-group">
-                    <label>Theme</label>
-                    <select id="theme-select">
-                        <option value="classic">Classic Parchment</option>
-                        <option value="modern">Modern Clean</option>
-                        <option value="dark">Dark Fantasy</option>
-                        <option value="vintage">Vintage Manuscript</option>
-                    </select>
-                </div>
-
-                <div class="control-group">
-                    <label>Character Name</label>
-                    <input type="text" id="char-name" value="Thorin Ironforge" placeholder="Character Name">
-                </div>
-
-                <div class="control-group">
-                    <label>Class</label>
-                    <input type="text" id="char-class" value="Fighter" placeholder="Class">
-                </div>
-
-                <div class="control-group">
-                    <label>Level</label>
-                    <input type="number" id="char-level" value="5" min="1" max="20">
-                </div>
-
-                <div class="control-group">
-                    <label>Race</label>
-                    <input type="text" id="char-race" value="Dwarf" placeholder="Race">
-                </div>
-
-                <button class="btn" data-action="generate">🎲 Generate Sheet</button>
-                <button class="btn btn-print" data-action="print">🖨️ Print to PDF</button>
-                <button class="btn btn-export" data-action="export">💾 Export Config</button>
-            </div>
-
-            <div class="preview-panel">
-                <div class="preview-wrapper" id="preview">
-                    <!-- Character sheet will be rendered here -->
-                </div>
-            </div>
+        <div class="editor-main" id="react-root">
+            <!-- React app will be mounted here -->
         </div>
     </div>
 
     <!-- Load the compiled bundle -->
-    <script type="module" src="/src/app.ts"></script>
+    <script type="module" src="/src/app.tsx"></script>
 </body>
 </html>
