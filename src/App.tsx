@@ -7,13 +7,13 @@ import { splitNode, updateSplitRatio } from './utils/layoutOperations';
 
 function App() {
   const [layout, setLayout] = useState<SheetLayout>(() => createInitialLayout());
-  const lastMousePosRef = useRef<{ x: number; y: number } | null>(null);
+  const dragMousePositionRef = useRef<{ x: number; y: number } | null>(null);
   
   function handleDragMove(event: DragMoveEvent) {
     const mouseEvent = event.activatorEvent;
     // Only handle mouse/pointer events
     if ('clientX' in mouseEvent && 'clientY' in mouseEvent) {
-      lastMousePosRef.current = {
+      dragMousePositionRef.current = {
         x: mouseEvent.clientX + event.delta.x,
         y: mouseEvent.clientY + event.delta.y,
       };
@@ -28,9 +28,9 @@ function App() {
     const targetNodeId = over.data.current?.nodeId;
     const componentType = active.data.current?.type;
     
-    if (targetNodeId && componentType && lastMousePosRef.current) {
-      const mouseX = lastMousePosRef.current.x;
-      const mouseY = lastMousePosRef.current.y;
+    if (targetNodeId && componentType && dragMousePositionRef.current) {
+      const mouseX = dragMousePositionRef.current.x;
+      const mouseY = dragMousePositionRef.current.y;
       
       // Get target bounds
       const targetRect = over.rect;
@@ -52,7 +52,7 @@ function App() {
       setLayout(prev => splitNode(prev, targetNodeId, componentType, splitDirection, isAfter));
     }
     
-    lastMousePosRef.current = null;
+    dragMousePositionRef.current = null;
   }
   
   function handleRatioChange(splitId: string, newRatio: number) {

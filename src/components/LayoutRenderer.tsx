@@ -61,7 +61,7 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick, depth = 0 }: Dr
     data: { nodeId: id },
   });
   const { active } = useDndContext();
-  const [mousePos, setMousePos] = React.useState<{ x: number; y: number } | null>(null);
+  const [dragMousePosition, setDragMousePosition] = React.useState<{ x: number; y: number } | null>(null);
   
   const isDragging = active?.data.current?.source === 'palette';
   const isPlaceholder = placeholder === '';
@@ -69,7 +69,7 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick, depth = 0 }: Dr
   // Reset mouse position when drag ends or hover stops
   React.useEffect(() => {
     if (!isOver || !isDragging) {
-      setMousePos(null);
+      setDragMousePosition(null);
     }
   }, [isOver, isDragging]);
   
@@ -77,19 +77,19 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick, depth = 0 }: Dr
   let splitDirection: 'horizontal' | 'vertical' = 'horizontal';
   let isAfter = true;
   
-  if (mousePos && !isPlaceholder) {
+  if (dragMousePosition && !isPlaceholder) {
     const centerX = bounds.left + bounds.width / 2;
     const centerY = bounds.top + bounds.height / 2;
-    const deviationX = Math.abs(mousePos.x - centerX) / (bounds.width / 2);
-    const deviationY = Math.abs(mousePos.y - centerY) / (bounds.height / 2);
+    const deviationX = Math.abs(dragMousePosition.x - centerX) / (bounds.width / 2);
+    const deviationY = Math.abs(dragMousePosition.y - centerY) / (bounds.height / 2);
     
     splitDirection = deviationX > deviationY ? 'horizontal' : 'vertical';
-    isAfter = splitDirection === 'horizontal' ? mousePos.x > centerX : mousePos.y > centerY;
+    isAfter = splitDirection === 'horizontal' ? dragMousePosition.x > centerX : dragMousePosition.y > centerY;
   }
   
   const handleMouseMove = React.useCallback((e: React.MouseEvent) => {
     if (isDragging && isOver) {
-      setMousePos({ x: e.clientX, y: e.clientY });
+      setDragMousePosition({ x: e.clientX, y: e.clientY });
     }
   }, [isDragging, isOver]);
   
