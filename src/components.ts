@@ -54,14 +54,14 @@ const SKILLS: Skill[] = [
 // Default proficiency data to avoid creating new objects repeatedly
 const DEFAULT_PROFICIENCY = { proficient: false };
 
-// HTML escape map for XSS prevention
-const HTML_ESCAPE_MAP: Record<string, string> = {
+// HTML escape map for XSS prevention (frozen to prevent tampering)
+const HTML_ESCAPE_MAP: Record<string, string> = Object.freeze({
   '&': '&amp;',
   '<': '&lt;',
   '>': '&gt;',
   '"': '&quot;',
   "'": '&#039;'
-};
+});
 
 // Helper to render section header
 function renderSectionHeader(config: SectionConfig, defaultTitle: string): string {
