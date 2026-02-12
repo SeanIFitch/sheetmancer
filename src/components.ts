@@ -54,16 +54,30 @@ const SKILLS: Skill[] = [
 // Default proficiency data to avoid creating new objects repeatedly
 const DEFAULT_PROFICIENCY = { proficient: false };
 
+// HTML escape map for XSS prevention (frozen to prevent tampering)
+const HTML_ESCAPE_MAP: Record<string, string> = Object.freeze({
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#039;'
+});
+
 // Helper to render section header
 function renderSectionHeader(config: SectionConfig, defaultTitle: string): string {
-  return config.showHeader !== false ? `<div class="section-header">${config.title || defaultTitle}</div>` : '';
+  return config.showHeader !== false ? `<div class="section-header">${escapeHtml(config.title || defaultTitle)}</div>` : '';
+}
+
+// Helper to escape HTML to prevent XSS (efficient single-pass version)
+function escapeHtml(text: string): string {
+  return text.replace(/[&<>"']/g, (char) => HTML_ESCAPE_MAP[char]);
 }
 
 // Helper to render list of items
 function renderItemList(items: string[], emptyMessage: string, itemClass: string): string {
   return items.length > 0 
-    ? items.map((item) => `<div class="${itemClass}">${item}</div>`).join('') 
-    : `<div class="${itemClass}">${emptyMessage}</div>`;
+    ? items.map((item) => `<div class="${itemClass}">${escapeHtml(item)}</div>`).join('') 
+    : `<div class="${itemClass}">${escapeHtml(emptyMessage)}</div>`;
 }
 
 export const COMPONENTS: Record<string, Component> = {
@@ -192,11 +206,12 @@ export const COMPONENTS: Record<string, Component> = {
     render(config: SectionConfig, _theme: Theme, data: CharacterData): string {
       const fieldName = (config.field as string) || 'notes';
       const content = data[fieldName] || '';
+      const escapedContent = typeof content === 'string' ? escapeHtml(content) : content;
 
       return `
         <div class="sheet-section">
           ${renderSectionHeader(config, 'Notes')}
-          <div class="field-value textarea-field">${content}</div>
+          <div class="field-value textarea-field">${escapedContent}</div>
         </div>`;
     },
   },
@@ -261,10 +276,13 @@ function renderHeaderField(field: string, data: CharacterData): string {
     experiencePoints: 'Experience Points',
   };
 
+  const value = data[field] || '';
+  const escapedValue = typeof value === 'string' ? escapeHtml(value) : value;
+
   return `
     <div class="field-group">
       <div class="field-label">${labels[field] || field}</div>
-      <div class="field-value">${data[field] || ''}</div>
+      <div class="field-value">${escapedValue}</div>
     </div>`;
 }
 
