@@ -9,15 +9,15 @@ import { CONFIGS } from './configs';
 import { THEMES, loadFonts } from './themes';
 
 function CharacterSheetApp() {
+  // Helper to clamp level between 1 and 20
+  const clampLevel = (value: number) => Math.max(1, Math.min(20, value));
+
   // State management
   const [currentConfig, setCurrentConfig] = useState('standard');
   const [currentTheme, setCurrentTheme] = useState('classic');
   const [characterName, setCharacterName] = useState('Thorin Ironforge');
   const [characterClass, setCharacterClass] = useState('Fighter');
   const [characterLevel, setCharacterLevel] = useState(5);
-
-  // Helper to clamp level between 1 and 20
-  const clampLevel = (value: number) => Math.max(1, Math.min(20, value));
   const [characterRace, setCharacterRace] = useState('Dwarf');
 
   // Initialize engine
