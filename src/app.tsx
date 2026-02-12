@@ -15,6 +15,9 @@ function CharacterSheetApp() {
   const [characterName, setCharacterName] = useState('Thorin Ironforge');
   const [characterClass, setCharacterClass] = useState('Fighter');
   const [characterLevel, setCharacterLevel] = useState(5);
+
+  // Helper to clamp level between 1 and 20
+  const clampLevel = (value: number) => Math.max(1, Math.min(20, value));
   const [characterRace, setCharacterRace] = useState('Dwarf');
 
   // Initialize engine
@@ -196,7 +199,7 @@ function CharacterSheetApp() {
             onChange={(e) => {
               const value = parseInt(e.target.value);
               if (!isNaN(value)) {
-                setCharacterLevel(Math.max(1, Math.min(20, value)));
+                setCharacterLevel(clampLevel(value));
               }
             }}
             onBlur={(e) => {
@@ -232,6 +235,9 @@ function CharacterSheetApp() {
         <div
           className="preview-wrapper"
           id="preview"
+          // Note: Using dangerouslySetInnerHTML here because the SheetEngine generates
+          // HTML strings. All user inputs are escaped via escapeHtml() in components.ts
+          // to prevent XSS attacks.
           dangerouslySetInnerHTML={{ __html: sheet.html }}
         />
       </div>

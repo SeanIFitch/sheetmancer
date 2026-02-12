@@ -59,11 +59,14 @@ function renderSectionHeader(config: SectionConfig, defaultTitle: string): strin
   return config.showHeader !== false ? `<div class="section-header">${escapeHtml(config.title || defaultTitle)}</div>` : '';
 }
 
-// Helper to escape HTML to prevent XSS
+// Helper to escape HTML to prevent XSS (efficient version)
 function escapeHtml(text: string): string {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 // Helper to render list of items
