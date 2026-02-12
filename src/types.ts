@@ -1,55 +1,56 @@
 // types.ts - Type definitions for the character sheet system
 
 export interface CharacterData {
-  // Basic Info
-  name: string;
-  class: string;
-  level: number;
-  race: string;
-  background: string;
-  alignment: string;
-  experiencePoints: number;
+  // Basic Info (all optional)
+  name?: string;
+  playerName?: string;
+  class?: string;
+  level?: number;
+  race?: string;
+  background?: string;
+  alignment?: string;
+  experiencePoints?: number;
 
-  // Ability Scores
-  strength: number;
-  dexterity: number;
-  constitution: number;
-  intelligence: number;
-  wisdom: number;
-  charisma: number;
+  // Ability Scores (all optional)
+  strength?: number;
+  dexterity?: number;
+  constitution?: number;
+  intelligence?: number;
+  wisdom?: number;
+  charisma?: number;
 
-  // Combat Stats
-  proficiencyBonus: number;
-  armorClass: number;
-  initiative: number;
-  speed: number;
-  hitPointMax: number;
-  hitPointCurrent: number;
-  hitDice: string;
-  deathSaves: {
-    successes: number;
-    failures: number;
+  // Combat Stats (all optional)
+  proficiencyBonus?: number;
+  armorClass?: number;
+  initiative?: number;
+  speed?: number;
+  hitPointMax?: number;
+  hitPointCurrent?: number;
+  hitDice?: string;
+  deathSaves?: {
+    successes?: number;
+    failures?: number;
   };
 
   // Skills (optional)
   skills?: {
     [skillName: string]: {
-      proficient: boolean;
+      proficient?: boolean;
     };
   };
 
   // Saving Throws (optional)
   savingThrows?: {
     [ability: string]: {
-      proficient: boolean;
+      proficient?: boolean;
     };
   };
 
-  // Equipment
-  equipment: string[];
+  // Equipment (optional)
+  equipment?: string[];
 
-  // Features
-  features: string[];
+  // Features (optional)
+  features?: string[];
 
   // Spells (optional)
   spells?: Array<{
@@ -77,11 +78,11 @@ export interface CharacterData {
   }>;
 
   currency?: {
-    cp: number;
-    sp: number;
-    ep: number;
-    gp: number;
-    pp: number;
+    cp?: number;
+    sp?: number;
+    ep?: number;
+    gp?: number;
+    pp?: number;
   };
 
   // Freeform text fields

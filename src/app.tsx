@@ -1,6 +1,6 @@
 // app.tsx - React-based application with real-time updates
 
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { CharacterData } from './types';
 import { SheetEngine } from './sheet-engine';
@@ -12,23 +12,16 @@ function CharacterSheetApp() {
   // Helper to clamp level between 1 and 20
   const clampLevel = (value: number) => Math.max(1, Math.min(20, value));
 
-  // State management
+  // State management for config and theme
   const [currentConfig, setCurrentConfig] = useState('standard');
   const [currentTheme, setCurrentTheme] = useState('classic');
-  const [characterName, setCharacterName] = useState('Thorin Ironforge');
-  const [characterClass, setCharacterClass] = useState('Fighter');
-  const [characterLevel, setCharacterLevel] = useState(5);
-  const [characterRace, setCharacterRace] = useState('Dwarf');
-
-  // Initialize engine
-  const engine = useMemo(() => new SheetEngine(COMPONENTS), []);
-
-  // Generate character data based on current state
-  const characterData: CharacterData = useMemo(() => ({
-    name: characterName,
-    class: characterClass,
-    level: characterLevel,
-    race: characterRace,
+  
+  // State management for character model (all fields optional)
+  const [characterData, setCharacterData] = useState<CharacterData>({
+    name: 'Thorin Ironforge',
+    class: 'Fighter',
+    level: 5,
+    race: 'Dwarf',
     background: 'Soldier',
     alignment: 'Lawful Good',
     experiencePoints: 6500,
@@ -75,7 +68,35 @@ function CharacterSheetApp() {
       'Dwarven Resilience',
     ],
     spells: [],
-  }), [characterName, characterClass, characterLevel, characterRace]);
+  });
+
+  // Initialize engine
+  const engine = useMemo(() => new SheetEngine(COMPONENTS), []);
+
+  // Setup global function for death save toggling
+  useEffect(() => {
+    window.toggleDeathSave = (element: HTMLElement, type: string, index: number) => {
+      element.classList.toggle('filled');
+      // Update character data when death saves are toggled
+      setCharacterData(prev => {
+        const newData = { ...prev };
+        const saves = { ...prev.deathSaves };
+        if (type === 'success') {
+          const currentSuccesses = saves.successes ?? 0;
+          saves.successes = element.classList.contains('filled') 
+            ? Math.max(currentSuccesses, index) 
+            : Math.min(currentSuccesses, index - 1);
+        } else {
+          const currentFailures = saves.failures ?? 0;
+          saves.failures = element.classList.contains('filled') 
+            ? Math.max(currentFailures, index) 
+            : Math.min(currentFailures, index - 1);
+        }
+        newData.deathSaves = saves;
+        return newData;
+      });
+    };
+  }, []);
 
   // Generate sheet automatically whenever dependencies change
   const sheet = useMemo(() => {
@@ -119,23 +140,26 @@ function CharacterSheetApp() {
   // Handle export
   const handleExport = () => {
     const config = {
-      config: currentConfig,
+      model: characterData,
+      layout: currentConfig,
       theme: currentTheme,
-      character: {
-        name: characterName,
-        class: characterClass,
-        level: characterLevel,
-        race: characterRace,
-      },
     };
 
     const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'character-config.json';
+    a.download = 'character-sheet.json';
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  // Helper to update character data field with type safety
+  const updateCharacterField = <K extends keyof CharacterData>(field: K, value: CharacterData[K]) => {
+    setCharacterData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   return (
@@ -173,8 +197,8 @@ function CharacterSheetApp() {
           <input
             type="text"
             id="char-name"
-            value={characterName}
-            onChange={(e) => setCharacterName(e.target.value)}
+            value={characterData.name ?? ''}
+            onChange={(e) => updateCharacterField('name', e.target.value)}
             placeholder="Character Name"
           />
         </div>
@@ -184,8 +208,8 @@ function CharacterSheetApp() {
           <input
             type="text"
             id="char-class"
-            value={characterClass}
-            onChange={(e) => setCharacterClass(e.target.value)}
+            value={characterData.class ?? ''}
+            onChange={(e) => updateCharacterField('class', e.target.value)}
             placeholder="Class"
           />
         </div>
@@ -195,14 +219,14 @@ function CharacterSheetApp() {
           <input
             type="number"
             id="char-level"
-            value={characterLevel}
+            value={characterData.level ?? 1}
             onChange={(e) => {
               const value = parseInt(e.target.value);
               if (!isNaN(value)) {
-                setCharacterLevel(clampLevel(value));
+                updateCharacterField('level', clampLevel(value));
               } else if (e.target.value === '') {
                 // Allow empty input temporarily while typing
-                setCharacterLevel(1);
+                updateCharacterField('level', 1);
               }
             }}
             min="1"
@@ -215,8 +239,8 @@ function CharacterSheetApp() {
           <input
             type="text"
             id="char-race"
-            value={characterRace}
-            onChange={(e) => setCharacterRace(e.target.value)}
+            value={characterData.race ?? ''}
+            onChange={(e) => updateCharacterField('race', e.target.value)}
             placeholder="Race"
           />
         </div>
