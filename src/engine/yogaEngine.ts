@@ -9,7 +9,7 @@ export function calculateLayout(page: PageLayout): LayoutResult[] {
   
   yogaRoot.calculateLayout(page.width, page.height, Yoga.DIRECTION_LTR);
   
-  const results = extractLayout(yogaRoot, page.root);
+  const results = extractLayout(yogaRoot, page.root, 0);
   
   yogaRoot.freeRecursive();
   
@@ -20,6 +20,7 @@ export interface LayoutResult {
   id: string;
   bounds: { left: number; top: number; width: number; height: number };
   placeholder?: string;
+  depth: number;
 }
 
 function buildYogaTree(node: LayoutNode): Yoga.YogaNode {
@@ -50,7 +51,7 @@ function buildYogaTree(node: LayoutNode): Yoga.YogaNode {
   return yogaNode;
 }
 
-function extractLayout(yogaNode: Yoga.YogaNode, configNode: LayoutNode): LayoutResult[] {
+function extractLayout(yogaNode: Yoga.YogaNode, configNode: LayoutNode, depth: number = 0): LayoutResult[] {
   const layout = yogaNode.getComputedLayout();
   
   if (configNode.type === 'leaf') {
@@ -64,6 +65,7 @@ function extractLayout(yogaNode: Yoga.YogaNode, configNode: LayoutNode): LayoutR
         height: layout.height,
       },
       placeholder: configNode.placeholder,
+      depth,
     }];
   }
   
@@ -71,10 +73,10 @@ function extractLayout(yogaNode: Yoga.YogaNode, configNode: LayoutNode): LayoutR
   const results: LayoutResult[] = [];
   
   const firstChildYoga = yogaNode.getChild(0);
-  results.push(...extractLayout(firstChildYoga, configNode.children[0]));
+  results.push(...extractLayout(firstChildYoga, configNode.children[0], depth + 1));
   
   const secondChildYoga = yogaNode.getChild(1);
-  results.push(...extractLayout(secondChildYoga, configNode.children[1]));
+  results.push(...extractLayout(secondChildYoga, configNode.children[1], depth + 1));
   
   return results;
 }
