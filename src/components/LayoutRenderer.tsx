@@ -26,7 +26,6 @@ export function LayoutRenderer({ page, onNodeClick, onRatioChange }: Props) {
     >
       {layoutResults.map(result => (
         <DroppableLayoutNode
-          key={result.id}
           id={result.id}
           bounds={result.bounds}
           placeholder={result.placeholder}
@@ -36,7 +35,6 @@ export function LayoutRenderer({ page, onNodeClick, onRatioChange }: Props) {
       ))}
       {onRatioChange && splits.map(split => (
         <ResizableSplit
-          key={split.id}
           splitId={split.id}
           direction={split.direction}
           ratio={split.ratio}
@@ -88,7 +86,7 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick, depth = 0 }: Dr
         fontSize: '14px',
       }}
     >
-      {placeholder || (isDragging ? 'Drop here' : '')}
+      {placeholder || ('UNDEFINED')}
       {isOver && isDragging && (
         <div
           style={{

@@ -31,16 +31,12 @@ function App() {
   
   return (
     <DndContext onDragEnd={handleDragEnd}>
-      <div style={{ display: 'flex', gap: 16, padding: 16 }}>
-        <ComponentPalette />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <button onClick={handleClearLayout}>Clear Layout</button>
-          <LayoutRenderer 
-            page={layout.pages[0]} 
-            onRatioChange={handleRatioChange}
-          />
-        </div>
-      </div>
+      <ComponentPalette />
+      <button onClick={handleClearLayout}>Clear Layout</button>
+      <LayoutRenderer
+        page={layout.pages[0]}
+        onRatioChange={handleRatioChange}
+      />
     </DndContext>
   );
 }

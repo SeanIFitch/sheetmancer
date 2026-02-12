@@ -1,4 +1,4 @@
-import Yoga from 'yoga-layout';
+import Yoga, {Node} from 'yoga-layout';
 import type { LayoutNode, PageLayout } from '../types/layout';
 
 /**
@@ -23,7 +23,7 @@ export interface LayoutResult {
   depth: number;
 }
 
-function buildYogaTree(node: LayoutNode): Yoga.YogaNode {
+function buildYogaTree(node: LayoutNode): Node {
   const yogaNode = Yoga.Node.create();
   
   if (node.type === 'leaf') {
@@ -51,7 +51,7 @@ function buildYogaTree(node: LayoutNode): Yoga.YogaNode {
   return yogaNode;
 }
 
-function extractLayout(yogaNode: Yoga.YogaNode, configNode: LayoutNode, depth: number = 0): LayoutResult[] {
+function extractLayout(yogaNode: Node, configNode: LayoutNode, depth: number = 0): LayoutResult[] {
   const layout = yogaNode.getComputedLayout();
   
   if (configNode.type === 'leaf') {
