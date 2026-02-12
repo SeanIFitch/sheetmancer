@@ -10,8 +10,11 @@ interface Props {
 
 export function ResizableSplit({ splitId, direction, ratio, bounds, onRatioChange }: Props) {
   const [isDragging, setIsDragging] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
   
   const handleMouseDown = () => setIsDragging(true);
+  const handleMouseEnter = () => setIsHovering(true);
+  const handleMouseLeave = () => setIsHovering(false);
   
   useEffect(() => {
     if (!isDragging) return;
@@ -51,12 +54,15 @@ export function ResizableSplit({ splitId, direction, ratio, bounds, onRatioChang
   return (
     <div
       onMouseDown={handleMouseDown}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       style={{
         position: 'absolute',
         ...dividerStyle,
-        backgroundColor: isDragging ? 'blue' : '#ccc',
+        backgroundColor: isDragging ? 'blue' : (isHovering ? '#999' : '#ccc'),
         cursor: direction === 'horizontal' ? 'col-resize' : 'row-resize',
-        zIndex: 100,
+        zIndex: isDragging ? 100 : 10,
+        pointerEvents: 'auto',
       }}
     />
   );

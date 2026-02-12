@@ -74,6 +74,8 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick }: DroppableNode
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        pointerEvents: 'auto',
+        zIndex: 1,
       }}
     >
       {placeholder || id}
