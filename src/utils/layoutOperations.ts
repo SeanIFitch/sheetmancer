@@ -1,4 +1,5 @@
-import type { SheetLayout, LayoutNode, SplitNode, LeafNode } from '../types/layout';
+import type {LayoutNode, LeafNode, SheetLayout, SplitNode} from '../types/layout';
+import {Edge} from "yoga-layout";
 
 /**
  * Replace a leaf node with a split containing the original + new node,
@@ -8,8 +9,7 @@ export function splitNode(
   layout: SheetLayout,
   targetId: string,
   newPlaceholder: string,
-  splitDirection: 'horizontal' | 'vertical',
-  isAfter: boolean
+  edge: Edge
 ): SheetLayout {
   const newLayout = structuredClone(layout);
   
@@ -32,13 +32,14 @@ export function splitNode(
       id: crypto.randomUUID(),
       component: newPlaceholder,
     };
-    
-    // Create new split with original node and new leaf
-    // Order based on whether new node should be after or before
+
+    const direction = edge === Edge.Top || edge === Edge.Bottom ? 'vertical' : 'horizontal';
+    const isAfter = edge === Edge.Bottom || edge === Edge.Right;
+
     const newSplit: SplitNode = {
       type: 'split',
       id: crypto.randomUUID(),
-      direction: splitDirection,
+      direction: direction,
       ratio: 0.5,
       children: isAfter ? [node, newLeaf] : [newLeaf, node]
     };

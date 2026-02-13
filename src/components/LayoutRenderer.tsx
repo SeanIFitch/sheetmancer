@@ -4,6 +4,8 @@ import type { PageLayout, LayoutNode } from '../types/layout';
 import { calculateLayout } from '../engine/yogaEngine';
 import { ResizableSplit } from './ResizableSplit';
 import { calculateEdgeCenterSplit } from '../utils/dragSplitHeuristic';
+import {Edge} from "yoga-layout";
+import {Bounds} from "../types/layout";
 
 interface Props {
   page: PageLayout;
@@ -52,13 +54,13 @@ export function LayoutRenderer({ page, onNodeClick, onRatioChange }: Props) {
 
 interface DroppableNodeProps {
   id: string;
-  bounds: { left: number; top: number; width: number; height: number };
+  bounds: Bounds;
   placeholder?: string;
   onClick?: () => void;
   depth?: number;
 }
 
-function DroppableLayoutNode({ id, bounds, placeholder, onClick, depth = 0 }: DroppableNodeProps) {
+function DroppableLayoutNode({ id, bounds, placeholder, onClick }: DroppableNodeProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: id,
     data: { nodeId: id },
@@ -77,19 +79,19 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick, depth = 0 }: Dr
   }, [isOver, isDragging]);
   
   // Calculate split info based on mouse position using edge-centered heuristic
-  let splitDirection: 'horizontal' | 'vertical' = 'horizontal';
-  let isAfter = true;
-  
+  let edge = Edge.Left;
+
   if (dragMousePosition && !isPlaceholder) {
-    const splitInfo = calculateEdgeCenterSplit(
+    edge = calculateEdgeCenterSplit(
       dragMousePosition.x,
       dragMousePosition.y,
       bounds
     );
-    splitDirection = splitInfo.direction;
-    isAfter = splitInfo.isAfter;
   }
-  
+
+  const direction = edge === Edge.Top || edge === Edge.Bottom ? 'vertical' : 'horizontal';
+  const isAfter = edge === Edge.Bottom || edge === Edge.Right;
+
   const handleMouseMove = React.useCallback((e: React.MouseEvent) => {
     if (isDragging && isOver) {
       setDragMousePosition({ x: e.clientX, y: e.clientY });
@@ -130,7 +132,7 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick, depth = 0 }: Dr
             height: '100%',
             pointerEvents: 'none',
             display: 'flex',
-            flexDirection: splitDirection === 'horizontal' ? 'row' : 'column',
+            flexDirection: direction === 'horizontal' ? 'row' : 'column',
           }}
         >
           {!isAfter && (

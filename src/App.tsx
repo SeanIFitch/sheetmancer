@@ -45,27 +45,17 @@ function App() {
       const mouseX = dragMousePositionRef.current.x;
       const mouseY = dragMousePositionRef.current.y;
       
-      // Get target bounds from dnd-kit
-      const targetRect = over.rect;
-      
-      // Use edge-centered heuristic to determine split
-      const splitInfo = calculateEdgeCenterSplit(
+      const edge = calculateEdgeCenterSplit(
         mouseX,
         mouseY,
-        {
-          left: targetRect.left,
-          top: targetRect.top,
-          width: targetRect.width,
-          height: targetRect.height,
-        }
+        over.rect
       );
       
       setLayout(prev => splitNode(
         prev,
         targetNodeId,
         componentType,
-        splitInfo.direction,
-        splitInfo.isAfter
+        edge
       ));
     }
     

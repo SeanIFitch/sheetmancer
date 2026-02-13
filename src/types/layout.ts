@@ -39,3 +39,13 @@ export interface LeafNode {
 export interface SheetLayout {
   pages: PageLayout[];
 }
+
+/**
+ * Bounds of a layout node
+ */
+export interface Bounds {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
