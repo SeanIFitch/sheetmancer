@@ -211,7 +211,8 @@ export class PageLayout {
   }
 
   /**
-   * Convert to plain object for serialization
+   * Convert to plain object for serialization.
+   * Returns a deep copy to ensure immutability of internal state.
    */
   toConfig(): PageLayoutConfig {
     return {
@@ -306,7 +307,11 @@ export class PageLayout {
   }
 
   /**
-   * Recursively replace a node
+   * Recursively replace a node.
+   * @param node - Node to search in
+   * @param targetId - ID of node to replace
+   * @param replacer - Function that receives a cloned node and returns a new node
+   * @returns New tree with node replaced, or null if not found
    */
   private _replaceNode(
     node: LayoutNode,
@@ -314,6 +319,7 @@ export class PageLayout {
     replacer: (node: LayoutNode) => LayoutNode
   ): LayoutNode | null {
     if (node.id === targetId) {
+      // Clone before passing to replacer to ensure immutability
       return replacer(structuredClone(node));
     }
 
@@ -387,7 +393,7 @@ export interface SplitNode {
 }
 
 /**
- * Leaf node - component slot
+ * Leaf node - represents a component
  */
 export interface LeafNode {
   type: 'leaf';

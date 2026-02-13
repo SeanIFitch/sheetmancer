@@ -97,7 +97,7 @@ function createInitialLayout(): SheetLayout {
       root: {
         type: 'leaf',
         id: crypto.randomUUID(),
-        component: undefined,
+        component: '',
       }
     })]
   };
