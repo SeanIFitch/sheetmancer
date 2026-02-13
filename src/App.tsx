@@ -4,6 +4,7 @@ import type {LayoutNode, SheetLayout} from './types/layout';
 import { ComponentPalette } from './components/ComponentPalette';
 import { LayoutRenderer } from './components/LayoutRenderer';
 import { splitNode, updateSplitRatio } from './utils/layoutOperations';
+import { calculateEdgeCenterSplit } from './utils/dragSplitHeuristic';
 
 function layoutTreeToString(node: LayoutNode, indent = ""): string {
   if ("children" in node) {
@@ -44,24 +45,28 @@ function App() {
       const mouseX = dragMousePositionRef.current.x;
       const mouseY = dragMousePositionRef.current.y;
       
-      // Get target bounds
+      // Get target bounds from dnd-kit
       const targetRect = over.rect;
-      const targetCenterX = targetRect.left + targetRect.width / 2;
-      const targetCenterY = targetRect.top + targetRect.height / 2;
       
-      // Calculate percentage deviations from center
-      const deviationX = Math.abs(mouseX - targetCenterX) / (targetRect.width / 2);
-      const deviationY = Math.abs(mouseY - targetCenterY) / (targetRect.height / 2);
+      // Use edge-centered heuristic to determine split
+      const splitInfo = calculateEdgeCenterSplit(
+        mouseX,
+        mouseY,
+        {
+          left: targetRect.left,
+          top: targetRect.top,
+          width: targetRect.width,
+          height: targetRect.height,
+        }
+      );
       
-      // Determine split direction based on highest deviation
-      const splitDirection = deviationX > deviationY ? 'horizontal' : 'vertical';
-      
-      // Determine which side the new node should be on
-      const isAfter = splitDirection === 'horizontal' 
-        ? mouseX > targetCenterX 
-        : mouseY > targetCenterY;
-      
-      setLayout(prev => splitNode(prev, targetNodeId, componentType, splitDirection, isAfter));
+      setLayout(prev => splitNode(
+        prev,
+        targetNodeId,
+        componentType,
+        splitInfo.direction,
+        splitInfo.isAfter
+      ));
     }
     
     dragMousePositionRef.current = null;

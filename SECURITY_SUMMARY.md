@@ -5,11 +5,19 @@
 ### CodeQL Analysis
 - **Status**: ✅ PASSED
 - **Vulnerabilities Found**: 0
-- **Scan Date**: February 11, 2026
+- **Scan Date**: February 12, 2026
 - **Languages Analyzed**: JavaScript/TypeScript
+- **Recent Changes**: Edge-centered drag split heuristic implementation
 
 ### Vulnerability Details
 No security vulnerabilities were detected during the CodeQL security scan.
+
+### Recent Code Changes (Edge-Centered Drag Split)
+- **New Module**: `src/utils/dragSplitHeuristic.ts`
+- **Security Impact**: None - Pure mathematical calculations
+- **Input Validation**: All inputs are numeric coordinates from trusted browser APIs
+- **No External Dependencies**: Uses only built-in Math functions
+- **Type Safety**: Full TypeScript type checking with exhaustive edge case handling
 
 ## Security Considerations
 

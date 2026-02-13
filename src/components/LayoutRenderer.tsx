@@ -3,6 +3,7 @@ import React from 'react';
 import type { PageLayout, LayoutNode } from '../types/layout';
 import { calculateLayout } from '../engine/yogaEngine';
 import { ResizableSplit } from './ResizableSplit';
+import { calculateEdgeCenterSplit } from '../utils/dragSplitHeuristic';
 
 interface Props {
   page: PageLayout;
@@ -75,18 +76,18 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick, depth = 0 }: Dr
     }
   }, [isOver, isDragging]);
   
-  // Calculate split info based on mouse position
+  // Calculate split info based on mouse position using edge-centered heuristic
   let splitDirection: 'horizontal' | 'vertical' = 'horizontal';
   let isAfter = true;
   
   if (dragMousePosition && !isPlaceholder) {
-    const centerX = bounds.left + bounds.width / 2;
-    const centerY = bounds.top + bounds.height / 2;
-    const deviationX = Math.abs(dragMousePosition.x - centerX) / (bounds.width / 2);
-    const deviationY = Math.abs(dragMousePosition.y - centerY) / (bounds.height / 2);
-    
-    splitDirection = deviationX > deviationY ? 'horizontal' : 'vertical';
-    isAfter = splitDirection === 'horizontal' ? dragMousePosition.x > centerX : dragMousePosition.y > centerY;
+    const splitInfo = calculateEdgeCenterSplit(
+      dragMousePosition.x,
+      dragMousePosition.y,
+      bounds
+    );
+    splitDirection = splitInfo.direction;
+    isAfter = splitInfo.isAfter;
   }
   
   const handleMouseMove = React.useCallback((e: React.MouseEvent) => {
