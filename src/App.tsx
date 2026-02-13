@@ -1,10 +1,9 @@
 import { DndContext, DragEndEvent, DragMoveEvent } from '@dnd-kit/core';
 import { useState, useRef } from 'react';
 import type {LayoutNode, SheetLayout} from './types/layout';
+import { PageLayout } from './types/layout';
 import { ComponentPalette } from './components/ComponentPalette';
 import { LayoutRenderer } from './components/LayoutRenderer';
-import { splitNode, updateSplitRatio } from './utils/layoutOperations';
-import { calculateEdgeCenterSplit } from './utils/dragSplitHeuristic';
 
 function layoutTreeToString(node: LayoutNode, indent = ""): string {
   if ("children" in node) {
@@ -45,25 +44,26 @@ function App() {
       const mouseX = dragMousePositionRef.current.x;
       const mouseY = dragMousePositionRef.current.y;
       
-      const edge = calculateEdgeCenterSplit(
-        mouseX,
-        mouseY,
-        over.rect
-      );
+      const page = layout.pages[0];
+      const edge = page.getClosestEdge(targetNodeId, mouseX, mouseY);
       
-      setLayout(prev => splitNode(
-        prev,
-        targetNodeId,
-        componentType,
-        edge
-      ));
+      if (edge !== null) {
+        const newPage = page.splitNode(targetNodeId, edge, componentType);
+        setLayout({
+          pages: [newPage]
+        });
+      }
     }
     
     dragMousePositionRef.current = null;
   }
   
   function handleRatioChange(splitId: string, newRatio: number) {
-    setLayout(prev => updateSplitRatio(prev, splitId, newRatio));
+    const page = layout.pages[0];
+    const newPage = page.resizeSplit(splitId, newRatio);
+    setLayout({
+      pages: [newPage]
+    });
   }
   
   function handleClearLayout() {
@@ -90,7 +90,7 @@ function App() {
 
 function createInitialLayout(): SheetLayout {
   return {
-    pages: [{
+    pages: [new PageLayout({
       id: crypto.randomUUID(),
       width: 816,
       height: 1056,
@@ -99,7 +99,7 @@ function createInitialLayout(): SheetLayout {
         id: crypto.randomUUID(),
         component: undefined,
       }
-    }]
+    })]
   };
 }
 

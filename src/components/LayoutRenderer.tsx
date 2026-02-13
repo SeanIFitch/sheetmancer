@@ -1,7 +1,6 @@
 import { useDroppable, useDndContext } from '@dnd-kit/core';
 import React from 'react';
-import type { PageLayout, LayoutNode } from '../types/layout';
-import { calculateLayout } from '../engine/yogaEngine';
+import type { PageLayout, LayoutNode, LayoutNodeBounds } from '../types/layout';
 import { ResizableSplit } from './ResizableSplit';
 import { calculateEdgeCenterSplit } from '../utils/dragSplitHeuristic';
 import {Edge} from "yoga-layout";
@@ -14,7 +13,7 @@ interface Props {
 }
 
 export function LayoutRenderer({ page, onNodeClick, onRatioChange }: Props) {
-  const layoutResults = calculateLayout(page);
+  const layoutResults = page.getLayout();
   
   // Collect all split nodes for rendering dividers
   const splits = collectSplits(page.root, layoutResults);
@@ -211,7 +210,7 @@ interface SplitInfo {
 
 function collectSplits(
   node: LayoutNode,
-  layoutResults: ReturnType<typeof calculateLayout>
+  layoutResults: LayoutNodeBounds[]
 ): SplitInfo[] {
   if (node.type === 'leaf') {
     return [];
