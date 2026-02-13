@@ -25,7 +25,7 @@ export interface SplitNode {
 }
 
 /**
- * Leaf node - component placeholder
+ * Leaf node - component slot
  */
 export interface LeafNode {
   type: 'leaf';

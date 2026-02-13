@@ -19,7 +19,7 @@ export function calculateLayout(page: PageLayout): LayoutResult[] {
 export interface LayoutResult {
   id: string;
   bounds: { left: number; top: number; width: number; height: number };
-  placeholder?: string;
+  component?: string;
   depth: number;
 }
 
@@ -64,7 +64,7 @@ function extractLayout(yogaNode: Node, configNode: LayoutNode, depth: number = 0
         width: layout.width,
         height: layout.height,
       },
-      placeholder: configNode.component,
+      component: configNode.component,
       depth,
     }];
   }

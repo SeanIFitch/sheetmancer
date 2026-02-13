@@ -33,7 +33,7 @@ export function LayoutRenderer({ page, onNodeClick, onRatioChange }: Props) {
           key={result.id}
           id={result.id}
           bounds={result.bounds}
-          placeholder={result.placeholder}
+          component={result.component}
           onClick={() => onNodeClick?.(result.id)}
           depth={result.depth}
         />
@@ -55,12 +55,12 @@ export function LayoutRenderer({ page, onNodeClick, onRatioChange }: Props) {
 interface DroppableNodeProps {
   id: string;
   bounds: Bounds;
-  placeholder?: string;
+  component?: string;
   onClick?: () => void;
   depth?: number;
 }
 
-function DroppableLayoutNode({ id, bounds, placeholder, onClick }: DroppableNodeProps) {
+function DroppableLayoutNode({ id, bounds, component, onClick }: DroppableNodeProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: id,
     data: { nodeId: id },
@@ -69,7 +69,7 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick }: DroppableNode
   const [dragMousePosition, setDragMousePosition] = React.useState<{ x: number; y: number } | null>(null);
   
   const isDragging = active?.data.current?.source === 'palette';
-  const isPlaceholder = placeholder === '';
+  const isPlaceholder = component === '';
   
   // Reset mouse position when drag ends or hover stops
   React.useEffect(() => {
@@ -121,7 +121,7 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick }: DroppableNode
         fontSize: '14px',
       }}
     >
-      {placeholder ?? 'UNDEFINED'}
+      {component ?? 'UNDEFINED'}
       {isOver && isDragging && !isPlaceholder && (
         <div
           style={{

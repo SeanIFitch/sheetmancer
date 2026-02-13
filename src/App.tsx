@@ -14,7 +14,7 @@ function layoutTreeToString(node: LayoutNode, indent = ""): string {
     }
     return str;
   } else {
-    return `${indent}- LeafNode (id: ${node.id}, placeholder: ${node.component})\n`;
+    return `${indent}- LeafNode (id: ${node.id}, component: ${node.component})\n`;
   }
 }
 
