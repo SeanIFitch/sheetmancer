@@ -3,7 +3,7 @@ import {Edge} from "yoga-layout";
 
 /**
  * Replace a leaf node with a split containing the original + new node,
- * or replace initial placeholder node directly
+ * or replace initial component node directly
  */
 export function splitNode(
   layout: SheetLayout,
@@ -17,7 +17,7 @@ export function splitNode(
   const replaced = replaceNode(newLayout.pages[0].root, targetId, (node) => {
     if (node.type !== 'leaf') return node;
     
-    // If this is an initial placeholder (empty string), replace it directly
+    // If this is an initial component (empty string), replace it directly
     if (node.component === '') {
       return {
         type: 'leaf',

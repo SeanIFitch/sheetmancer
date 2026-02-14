@@ -1,7 +1,6 @@
 import { useDroppable, useDndContext } from '@dnd-kit/core';
 import React from 'react';
-import type { PageLayout, LayoutNode } from '../types/layout';
-import { calculateLayout } from '../engine/yogaEngine';
+import type { PageLayout, LayoutNode, LayoutNodeBounds } from '../types/layout';
 import { ResizableSplit } from './ResizableSplit';
 import { calculateEdgeCenterSplit } from '../utils/dragSplitHeuristic';
 import {Edge} from "yoga-layout";
@@ -14,7 +13,7 @@ interface Props {
 }
 
 export function LayoutRenderer({ page, onNodeClick, onRatioChange }: Props) {
-  const layoutResults = calculateLayout(page);
+  const layoutResults = page.getLayout();
   
   // Collect all split nodes for rendering dividers
   const splits = collectSplits(page.root, layoutResults);
@@ -33,7 +32,7 @@ export function LayoutRenderer({ page, onNodeClick, onRatioChange }: Props) {
           key={result.id}
           id={result.id}
           bounds={result.bounds}
-          placeholder={result.placeholder}
+          component={result.component}
           onClick={() => onNodeClick?.(result.id)}
           depth={result.depth}
         />
@@ -55,12 +54,12 @@ export function LayoutRenderer({ page, onNodeClick, onRatioChange }: Props) {
 interface DroppableNodeProps {
   id: string;
   bounds: Bounds;
-  placeholder?: string;
+  component?: string;
   onClick?: () => void;
   depth?: number;
 }
 
-function DroppableLayoutNode({ id, bounds, placeholder, onClick }: DroppableNodeProps) {
+function DroppableLayoutNode({ id, bounds, component, onClick }: DroppableNodeProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: id,
     data: { nodeId: id },
@@ -69,7 +68,7 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick }: DroppableNode
   const [dragMousePosition, setDragMousePosition] = React.useState<{ x: number; y: number } | null>(null);
   
   const isDragging = active?.data.current?.source === 'palette';
-  const isPlaceholder = placeholder === '';
+  const isPlaceholder = component === '';
   
   // Reset mouse position when drag ends or hover stops
   React.useEffect(() => {
@@ -121,7 +120,7 @@ function DroppableLayoutNode({ id, bounds, placeholder, onClick }: DroppableNode
         fontSize: '14px',
       }}
     >
-      {placeholder ?? 'UNDEFINED'}
+      {component ?? 'UNDEFINED'}
       {isOver && isDragging && !isPlaceholder && (
         <div
           style={{
@@ -211,7 +210,7 @@ interface SplitInfo {
 
 function collectSplits(
   node: LayoutNode,
-  layoutResults: ReturnType<typeof calculateLayout>
+  layoutResults: LayoutNodeBounds[]
 ): SplitInfo[] {
   if (node.type === 'leaf') {
     return [];
