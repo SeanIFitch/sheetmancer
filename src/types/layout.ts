@@ -1,6 +1,22 @@
 import Yoga, { Node, Edge } from 'yoga-layout';
 
 /**
+ * Default split ratio for new splits
+ */
+const DEFAULT_SPLIT_RATIO = 0.5;
+
+/**
+ * Generate a unique ID (fallback for environments without crypto API)
+ */
+function generateId(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback for environments without crypto API
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
  * Metadata for each yoga node
  */
 interface NodeMetadata {
@@ -41,7 +57,7 @@ export class PageLayout {
     this._yogaRoot = Yoga.Node.create();
     this._yogaRoot.setFlexGrow(1);
     this._metadata.set(this._yogaRoot, {
-      id: crypto.randomUUID(),
+      id: generateId(),
       component: config.rootComponent ?? '',
     });
   }
@@ -60,6 +76,8 @@ export class PageLayout {
 
   /**
    * Get root node metadata for backwards compatibility
+   * @deprecated This getter is provided for backwards compatibility with components
+   * that expect a root property. Use getLayout() to access node information.
    */
   get root(): { type: 'legacy'; id: string } {
     const metadata = this._metadata.get(this._yogaRoot);
@@ -155,7 +173,7 @@ export class PageLayout {
       splits.push({
         id: metadata.id,
         direction: metadata.direction,
-        ratio: metadata.ratio ?? 0.5,
+        ratio: metadata.ratio ?? DEFAULT_SPLIT_RATIO,
         bounds: {
           left,
           top,
@@ -309,22 +327,22 @@ export class PageLayout {
     }
 
     newLayout._metadata.set(splitNode, {
-      id: crypto.randomUUID(),
+      id: generateId(),
       direction,
-      ratio: 0.5,
+      ratio: DEFAULT_SPLIT_RATIO,
     });
 
     // Create new leaf
     const newLeaf = Yoga.Node.create();
     newLeaf.setFlexGrow(1);
     newLayout._metadata.set(newLeaf, {
-      id: crypto.randomUUID(),
+      id: generateId(),
       component,
     });
 
     // Configure flexGrow for children
-    newTargetNode.setFlexGrow(0.5);
-    newLeaf.setFlexGrow(0.5);
+    newTargetNode.setFlexGrow(DEFAULT_SPLIT_RATIO);
+    newLeaf.setFlexGrow(DEFAULT_SPLIT_RATIO);
 
     // Arrange children based on edge
     const isAfter = edge === Edge.Bottom || edge === Edge.Right;
@@ -340,7 +358,10 @@ export class PageLayout {
     if (isRoot) {
       // Need to copy split node contents to root
       newLayout._yogaRoot.setFlexDirection(splitNode.getFlexDirection());
-      newLayout._metadata.set(newLayout._yogaRoot, newLayout._metadata.get(splitNode)!);
+      const splitMetadata = newLayout._metadata.get(splitNode);
+      if (splitMetadata) {
+        newLayout._metadata.set(newLayout._yogaRoot, splitMetadata);
+      }
       
       for (let i = 0; i < splitNode.getChildCount(); i++) {
         const child = splitNode.getChild(i);
@@ -390,10 +411,12 @@ export class PageLayout {
    * Convert to plain object for serialization (legacy support)
    */
   toConfig(): PageLayoutConfig {
+    const rootMetadata = this._metadata.get(this._yogaRoot);
     return {
       id: this._id,
       width: this._width,
       height: this._height,
+      rootComponent: rootMetadata?.component,
     };
   }
 
