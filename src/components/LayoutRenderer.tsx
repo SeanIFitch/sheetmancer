@@ -1,6 +1,6 @@
 import { useDroppable, useDndContext } from '@dnd-kit/core';
 import React from 'react';
-import type { PageLayout, LayoutNode, LayoutNodeBounds } from '../types/layout';
+import type { PageLayout, LayoutNodeBounds } from '../types/layout';
 import { ResizableSplit } from './ResizableSplit';
 import { calculateEdgeCenterSplit } from '../utils/dragSplitHeuristic';
 import {Edge} from "yoga-layout";
@@ -15,8 +15,8 @@ interface Props {
 export function LayoutRenderer({ page, onNodeClick, onRatioChange }: Props) {
   const layoutResults = page.getLayout();
   
-  // Collect all split nodes for rendering dividers
-  const splits = collectSplits(page.root, layoutResults);
+  // Get all split nodes for rendering dividers
+  const splits = page.getSplits();
   
   return (
     <div
@@ -201,67 +201,4 @@ function DroppableLayoutNode({ id, bounds, component, onClick }: DroppableNodePr
   );
 }
 
-interface SplitInfo {
-  id: string;
-  direction: 'horizontal' | 'vertical';
-  ratio: number;
-  bounds: { left: number; top: number; width: number; height: number };
-}
-
-function collectSplits(
-  node: LayoutNode,
-  layoutResults: LayoutNodeBounds[]
-): SplitInfo[] {
-  if (node.type === 'leaf') {
-    return [];
-  }
-  
-  // Find the bounds that encompass this split's children
-  const firstChildId = getFirstLeafId(node.children[0]);
-  const secondChildId = getFirstLeafId(node.children[1]);
-  
-  const firstResult = layoutResults.find(r => r.id === firstChildId);
-  const secondResult = layoutResults.find(r => r.id === secondChildId);
-  
-  if (!firstResult || !secondResult) {
-    return [
-      ...collectSplits(node.children[0], layoutResults),
-      ...collectSplits(node.children[1], layoutResults),
-    ];
-  }
-  
-  // Calculate the bounds that encompass both children
-  const left = Math.min(firstResult.bounds.left, secondResult.bounds.left);
-  const top = Math.min(firstResult.bounds.top, secondResult.bounds.top);
-  const right = Math.max(
-    firstResult.bounds.left + firstResult.bounds.width,
-    secondResult.bounds.left + secondResult.bounds.width
-  );
-  const bottom = Math.max(
-    firstResult.bounds.top + firstResult.bounds.height,
-    secondResult.bounds.top + secondResult.bounds.height
-  );
-  
-  return [
-    {
-      id: node.id,
-      direction: node.direction,
-      ratio: node.ratio,
-      bounds: {
-        left,
-        top,
-        width: right - left,
-        height: bottom - top,
-      },
-    },
-    ...collectSplits(node.children[0], layoutResults),
-    ...collectSplits(node.children[1], layoutResults),
-  ];
-}
-
-function getFirstLeafId(node: LayoutNode): string {
-  if (node.type === 'leaf') {
-    return node.id;
-  }
-  return getFirstLeafId(node.children[0]);
-}
+export default LayoutRenderer;

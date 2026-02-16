@@ -1,30 +1,65 @@
 import Yoga, { Node, Edge } from 'yoga-layout';
 
 /**
+ * Default split ratio for new splits
+ */
+const DEFAULT_SPLIT_RATIO = 0.5;
+
+/**
+ * Generate a unique ID (fallback for environments without crypto API)
+ */
+function generateId(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback for environments without crypto API
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
+ * Metadata for each yoga node
+ */
+interface NodeMetadata {
+  id: string;
+  component?: string;
+  direction?: 'horizontal' | 'vertical';
+  ratio?: number;
+}
+
+/**
  * Layout configuration for a single page (8.5" x 11" at 96dpi)
  */
 export interface PageLayoutConfig {
   id: string;
   width: number;  // 816 (8.5 * 96)
   height: number; // 1056 (11 * 96)
-  root: LayoutNode;
+  rootComponent?: string; // Initial component
 }
 
 /**
- * PageLayout class - manages page layout with methods for manipulation
+ * PageLayout class - manages page layout using only Yoga tree
  */
 export class PageLayout {
   private readonly _id: string;
   private readonly _width: number;
   private readonly _height: number;
-  private readonly _root: LayoutNode;
+  private readonly _yogaRoot: Node;
+  private readonly _metadata: Map<Node, NodeMetadata>;
   private _layoutCache: LayoutNodeBounds[] | null = null;
 
   constructor(config: PageLayoutConfig) {
     this._id = config.id;
     this._width = config.width;
     this._height = config.height;
-    this._root = config.root;
+    this._metadata = new Map();
+    
+    // Create initial yoga tree with a single leaf node
+    this._yogaRoot = Yoga.Node.create();
+    this._yogaRoot.setFlexGrow(1);
+    this._metadata.set(this._yogaRoot, {
+      id: generateId(),
+      component: config.rootComponent ?? '',
+    });
   }
 
   get id(): string {
@@ -39,8 +74,17 @@ export class PageLayout {
     return this._height;
   }
 
-  get root(): LayoutNode {
-    return this._root;
+  /**
+   * Get root node metadata for backwards compatibility
+   * @deprecated This getter is provided for backwards compatibility with components
+   * that expect a root property. Use getLayout() to access node information.
+   */
+  get root(): { type: 'legacy'; id: string } {
+    const metadata = this._metadata.get(this._yogaRoot);
+    return {
+      type: 'legacy',
+      id: metadata?.id ?? 'unknown',
+    };
   }
 
   /**
@@ -51,6 +95,113 @@ export class PageLayout {
       this._layoutCache = this._computeLayout();
     }
     return this._layoutCache;
+  }
+
+  /**
+   * Invalidate layout cache
+   */
+  private _invalidateCache(): void {
+    this._layoutCache = null;
+  }
+
+  /**
+   * Get all splits for rendering dividers
+   */
+  getSplits(): Array<{
+    id: string;
+    direction: 'horizontal' | 'vertical';
+    ratio: number;
+    bounds: Bounds;
+  }> {
+    const layout = this.getLayout();
+    const splits: Array<{
+      id: string;
+      direction: 'horizontal' | 'vertical';
+      ratio: number;
+      bounds: Bounds;
+    }> = [];
+
+    this._collectSplitsFromNode(this._yogaRoot, layout, splits);
+    return splits;
+  }
+
+  private _collectSplitsFromNode(
+    node: Node,
+    layout: LayoutNodeBounds[],
+    splits: Array<{
+      id: string;
+      direction: 'horizontal' | 'vertical';
+      ratio: number;
+      bounds: Bounds;
+    }>
+  ): void {
+    const metadata = this._metadata.get(node);
+    if (!metadata || !metadata.direction) {
+      // Not a split node, check children
+      const childCount = node.getChildCount();
+      for (let i = 0; i < childCount; i++) {
+        this._collectSplitsFromNode(node.getChild(i), layout, splits);
+      }
+      return;
+    }
+
+    // This is a split node, get its bounds from children
+    const childCount = node.getChildCount();
+    if (childCount !== 2) return;
+
+    const firstChild = node.getChild(0);
+    const secondChild = node.getChild(1);
+
+    const firstLeafId = this._getFirstLeafId(firstChild);
+    const secondLeafId = this._getFirstLeafId(secondChild);
+
+    const firstResult = layout.find(r => r.id === firstLeafId);
+    const secondResult = layout.find(r => r.id === secondLeafId);
+
+    if (firstResult && secondResult) {
+      const left = Math.min(firstResult.bounds.left, secondResult.bounds.left);
+      const top = Math.min(firstResult.bounds.top, secondResult.bounds.top);
+      const right = Math.max(
+        firstResult.bounds.left + firstResult.bounds.width,
+        secondResult.bounds.left + secondResult.bounds.width
+      );
+      const bottom = Math.max(
+        firstResult.bounds.top + firstResult.bounds.height,
+        secondResult.bounds.top + secondResult.bounds.height
+      );
+
+      splits.push({
+        id: metadata.id,
+        direction: metadata.direction,
+        ratio: metadata.ratio ?? DEFAULT_SPLIT_RATIO,
+        bounds: {
+          left,
+          top,
+          width: right - left,
+          height: bottom - top,
+        },
+      });
+    }
+
+    // Recurse into children
+    this._collectSplitsFromNode(firstChild, layout, splits);
+    this._collectSplitsFromNode(secondChild, layout, splits);
+  }
+
+  private _getFirstLeafId(node: Node): string | null {
+    const metadata = this._metadata.get(node);
+    if (!metadata) return null;
+
+    if (metadata.component !== undefined) {
+      return metadata.id;
+    }
+
+    const childCount = node.getChildCount();
+    if (childCount > 0) {
+      return this._getFirstLeafId(node.getChild(0));
+    }
+
+    return null;
   }
 
   /**
@@ -131,88 +282,141 @@ export class PageLayout {
    * @param nodeId - ID of the node to split
    * @param edge - Edge to add the new leaf on
    * @param component - Component for the new leaf
-   * @returns New PageLayout instance with the split applied
    */
   splitNode(nodeId: string, edge: Edge, component: string): PageLayout {
-    const newRoot = this._replaceNode(this._root, nodeId, (node) => {
-      if (node.type !== 'leaf') return node;
+    const targetNode = this._findNodeById(nodeId);
+    if (!targetNode) return this;
 
-      // If this is an initial component (empty string), replace it directly
-      if (node.component === '') {
-        return {
-          type: 'leaf',
-          id: node.id,
-          component: component,
-        };
-      }
+    const metadata = this._metadata.get(targetNode);
+    if (!metadata) return this;
 
-      // Create new leaf for the new component
-      const newLeaf: LeafNode = {
-        type: 'leaf',
-        id: crypto.randomUUID(),
-        component: component,
-      };
-
-      const direction = edge === Edge.Top || edge === Edge.Bottom ? 'vertical' : 'horizontal';
-      const isAfter = edge === Edge.Bottom || edge === Edge.Right;
-
-      const newSplit: SplitNode = {
-        type: 'split',
-        id: crypto.randomUUID(),
-        direction: direction,
-        ratio: 0.5,
-        children: isAfter ? [node, newLeaf] : [newLeaf, node],
-      };
-
-      return newSplit;
-    });
-
-    if (!newRoot) {
+    // If this is an initial component (empty string), replace it directly
+    if (metadata.component === '') {
+      metadata.component = component;
+      this._invalidateCache();
       return this;
     }
 
-    return new PageLayout({
+    // Create new layout with split
+    const newLayout = new PageLayout({
       id: this._id,
       width: this._width,
       height: this._height,
-      root: newRoot,
     });
+
+    // Clone the yoga tree structure
+    this._cloneYogaTree(this._yogaRoot, newLayout._yogaRoot, newLayout._metadata);
+
+    // Find the target node in the new tree
+    const newTargetNode = newLayout._findNodeById(nodeId);
+    if (!newTargetNode) return this;
+
+    // Get parent and find target's position
+    const parent = newLayout._findParent(newTargetNode);
+    const isRoot = parent === null;
+    const childIndex = parent ? newLayout._getChildIndex(parent, newTargetNode) : -1;
+
+    // Create new split container
+    const splitNode = Yoga.Node.create();
+    const direction = edge === Edge.Top || edge === Edge.Bottom ? 'vertical' : 'horizontal';
+    
+    if (direction === 'horizontal') {
+      splitNode.setFlexDirection(Yoga.FLEX_DIRECTION_ROW);
+    } else {
+      splitNode.setFlexDirection(Yoga.FLEX_DIRECTION_COLUMN);
+    }
+
+    newLayout._metadata.set(splitNode, {
+      id: generateId(),
+      direction,
+      ratio: DEFAULT_SPLIT_RATIO,
+    });
+
+    // Create new leaf
+    const newLeaf = Yoga.Node.create();
+    newLeaf.setFlexGrow(1);
+    newLayout._metadata.set(newLeaf, {
+      id: generateId(),
+      component,
+    });
+
+    // Configure flexGrow for children
+    newTargetNode.setFlexGrow(DEFAULT_SPLIT_RATIO);
+    newLeaf.setFlexGrow(DEFAULT_SPLIT_RATIO);
+
+    // Arrange children based on edge
+    const isAfter = edge === Edge.Bottom || edge === Edge.Right;
+    if (isAfter) {
+      splitNode.insertChild(newTargetNode, 0);
+      splitNode.insertChild(newLeaf, 1);
+    } else {
+      splitNode.insertChild(newLeaf, 0);
+      splitNode.insertChild(newTargetNode, 1);
+    }
+
+    // Replace target node with split node
+    if (isRoot) {
+      // Need to copy split node contents to root
+      newLayout._yogaRoot.setFlexDirection(splitNode.getFlexDirection());
+      const splitMetadata = newLayout._metadata.get(splitNode);
+      if (splitMetadata) {
+        newLayout._metadata.set(newLayout._yogaRoot, splitMetadata);
+      }
+      
+      for (let i = 0; i < splitNode.getChildCount(); i++) {
+        const child = splitNode.getChild(i);
+        newLayout._yogaRoot.insertChild(child, i);
+      }
+      splitNode.free();
+    } else {
+      parent!.removeChild(newTargetNode);
+      parent!.insertChild(splitNode, childIndex);
+    }
+
+    newLayout._invalidateCache();
+    return newLayout;
   }
 
   /**
    * Resize a split by updating its ratio
    * @param splitId - ID of the split to resize
    * @param newRatio - New ratio (0.0 - 1.0)
-   * @returns New PageLayout instance with the updated ratio
    */
   resizeSplit(splitId: string, newRatio: number): PageLayout {
     // Clamp ratio between 0.1 and 0.9
     const clampedRatio = Math.max(0.1, Math.min(0.9, newRatio));
 
-    const newRoot = this._updateNodeRatio(this._root, splitId, clampedRatio);
+    const splitNode = this._findNodeById(splitId);
+    if (!splitNode) return this;
 
-    if (!newRoot) {
-      return this;
+    const metadata = this._metadata.get(splitNode);
+    if (!metadata || !metadata.direction) return this;
+
+    // Update ratio in metadata
+    metadata.ratio = clampedRatio;
+
+    // Update flex grow for children
+    if (splitNode.getChildCount() === 2) {
+      const firstChild = splitNode.getChild(0);
+      const secondChild = splitNode.getChild(1);
+      firstChild.setFlexGrow(clampedRatio);
+      secondChild.setFlexGrow(1 - clampedRatio);
     }
 
-    return new PageLayout({
-      id: this._id,
-      width: this._width,
-      height: this._height,
-      root: newRoot,
-    });
+    this._invalidateCache();
+    return this;
   }
 
   /**
-   * Convert to plain object for serialization.
-   * Returns a deep copy to ensure immutability of internal state.
+   * Convert to plain object for serialization (legacy support)
    */
   toConfig(): PageLayoutConfig {
+    const rootMetadata = this._metadata.get(this._yogaRoot);
     return {
       id: this._id,
       width: this._width,
       height: this._height,
-      root: structuredClone(this._root),
+      rootComponent: rootMetadata?.component,
     };
   }
 
@@ -220,178 +424,120 @@ export class PageLayout {
    * Compute layout using Yoga
    */
   private _computeLayout(): LayoutNodeBounds[] {
-    const yogaRoot = this._buildYogaTree(this._root);
-
-    yogaRoot.calculateLayout(this._width, this._height, Yoga.DIRECTION_LTR);
-
-    const results = this._extractLayout(yogaRoot, this._root, 0);
-
-    yogaRoot.freeRecursive();
-
-    return results;
-  }
-
-  /**
-   * Build Yoga tree from layout node
-   */
-  private _buildYogaTree(node: LayoutNode): Node {
-    const yogaNode = Yoga.Node.create();
-
-    if (node.type === 'leaf') {
-      yogaNode.setFlexGrow(1);
-      return yogaNode;
-    }
-
-    // Split node - set flex direction and create children
-    if (node.direction === 'horizontal') {
-      yogaNode.setFlexDirection(Yoga.FLEX_DIRECTION_ROW);
-    } else {
-      yogaNode.setFlexDirection(Yoga.FLEX_DIRECTION_COLUMN);
-    }
-
-    // Create children with ratio via flexGrow
-    const firstChild = this._buildYogaTree(node.children[0]);
-    firstChild.setFlexGrow(node.ratio);
-    yogaNode.insertChild(firstChild, 0);
-
-    const secondChild = this._buildYogaTree(node.children[1]);
-    secondChild.setFlexGrow(1 - node.ratio);
-    yogaNode.insertChild(secondChild, 1);
-
-    return yogaNode;
+    this._yogaRoot.calculateLayout(this._width, this._height, Yoga.DIRECTION_LTR);
+    return this._extractLayout(this._yogaRoot, 0);
   }
 
   /**
    * Extract layout from Yoga tree
    */
-  private _extractLayout(
-    yogaNode: Node,
-    configNode: LayoutNode,
-    depth: number = 0
-  ): LayoutNodeBounds[] {
+  private _extractLayout(yogaNode: Node, depth: number = 0): LayoutNodeBounds[] {
     const layout = yogaNode.getComputedLayout();
+    const metadata = this._metadata.get(yogaNode);
+    
+    if (!metadata) return [];
 
-    if (configNode.type === 'leaf') {
-      return [
-        {
-          id: configNode.id,
-          bounds: {
-            left: layout.left,
-            top: layout.top,
-            width: layout.width,
-            height: layout.height,
-          },
-          component: configNode.component,
-          depth,
-        },
-      ];
-    }
-
-    // Split node - recursively extract children
     const results: LayoutNodeBounds[] = [];
 
-    const firstChildYoga = yogaNode.getChild(0);
-    results.push(...this._extractLayout(firstChildYoga, configNode.children[0], depth + 1));
+    // If this is a leaf node (has component), add it to results
+    if (metadata.component !== undefined) {
+      results.push({
+        id: metadata.id,
+        bounds: {
+          left: layout.left,
+          top: layout.top,
+          width: layout.width,
+          height: layout.height,
+        },
+        component: metadata.component,
+        depth,
+      });
+    }
 
-    const secondChildYoga = yogaNode.getChild(1);
-    results.push(...this._extractLayout(secondChildYoga, configNode.children[1], depth + 1));
+    // Recursively extract children
+    const childCount = yogaNode.getChildCount();
+    for (let i = 0; i < childCount; i++) {
+      const child = yogaNode.getChild(i);
+      results.push(...this._extractLayout(child, depth + 1));
+    }
 
     return results;
   }
 
   /**
-   * Recursively replace a node.
-   * @param node - Node to search in
-   * @param targetId - ID of node to replace
-   * @param replacer - Function that receives a cloned node and returns a new node
-   * @returns New tree with node replaced, or null if not found
+   * Find a yoga node by its ID
    */
-  private _replaceNode(
-    node: LayoutNode,
-    targetId: string,
-    replacer: (node: LayoutNode) => LayoutNode
-  ): LayoutNode | null {
-    if (node.id === targetId) {
-      // Clone before passing to replacer to ensure immutability
-      return replacer(structuredClone(node));
+  private _findNodeById(targetId: string, node: Node = this._yogaRoot): Node | null {
+    const metadata = this._metadata.get(node);
+    if (metadata?.id === targetId) {
+      return node;
     }
 
-    if (node.type === 'split') {
-      const newFirst = this._replaceNode(node.children[0], targetId, replacer);
-      if (newFirst) {
-        const newNode = structuredClone(node);
-        newNode.children[0] = newFirst;
-        return newNode;
-      }
-
-      const newSecond = this._replaceNode(node.children[1], targetId, replacer);
-      if (newSecond) {
-        const newNode = structuredClone(node);
-        newNode.children[1] = newSecond;
-        return newNode;
-      }
+    const childCount = node.getChildCount();
+    for (let i = 0; i < childCount; i++) {
+      const child = node.getChild(i);
+      const found = this._findNodeById(targetId, child);
+      if (found) return found;
     }
 
     return null;
   }
 
   /**
-   * Recursively update a split node's ratio
+   * Find parent of a node
    */
-  private _updateNodeRatio(
-    node: LayoutNode,
-    splitId: string,
-    newRatio: number
-  ): LayoutNode | null {
-    if (node.id === splitId && node.type === 'split') {
-      const newNode = structuredClone(node);
-      newNode.ratio = newRatio;
-      return newNode;
-    }
-
-    if (node.type === 'split') {
-      const updatedFirstChild = this._updateNodeRatio(node.children[0], splitId, newRatio);
-      if (updatedFirstChild) {
-        const newNode = structuredClone(node);
-        newNode.children[0] = updatedFirstChild;
-        return newNode;
+  private _findParent(targetNode: Node, node: Node = this._yogaRoot): Node | null {
+    const childCount = node.getChildCount();
+    for (let i = 0; i < childCount; i++) {
+      const child = node.getChild(i);
+      if (child === targetNode) {
+        return node;
       }
-
-      const updatedSecondChild = this._updateNodeRatio(node.children[1], splitId, newRatio);
-      if (updatedSecondChild) {
-        const newNode = structuredClone(node);
-        newNode.children[1] = updatedSecondChild;
-        return newNode;
-      }
+      const found = this._findParent(targetNode, child);
+      if (found) return found;
     }
-
     return null;
   }
-}
 
-/**
- * Layout node - either a split (container) or leaf (component slot)
- */
-export type LayoutNode = SplitNode | LeafNode;
+  /**
+   * Get child index
+   */
+  private _getChildIndex(parent: Node, child: Node): number {
+    const childCount = parent.getChildCount();
+    for (let i = 0; i < childCount; i++) {
+      if (parent.getChild(i) === child) {
+        return i;
+      }
+    }
+    return -1;
+  }
 
-/**
- * Split node - divides space into two children
- */
-export interface SplitNode {
-  type: 'split';
-  id: string;
-  direction: 'horizontal' | 'vertical';
-  ratio: number; // 0.0 - 1.0, first child gets this ratio
-  children: [LayoutNode, LayoutNode]; // Always exactly 2
-}
+  /**
+   * Clone yoga tree structure
+   */
+  private _cloneYogaTree(
+    sourceNode: Node,
+    targetNode: Node,
+    targetMetadata: Map<Node, NodeMetadata>
+  ): void {
+    const metadata = this._metadata.get(sourceNode);
+    if (metadata) {
+      targetMetadata.set(targetNode, { ...metadata });
+    }
 
-/**
- * Leaf node - represents a component
- */
-export interface LeafNode {
-  type: 'leaf';
-  id: string;
-  component: string | undefined;
+    // Copy flex properties
+    targetNode.setFlexDirection(sourceNode.getFlexDirection());
+    targetNode.setFlexGrow(sourceNode.getFlexGrow());
+
+    // Clone children
+    const childCount = sourceNode.getChildCount();
+    for (let i = 0; i < childCount; i++) {
+      const sourceChild = sourceNode.getChild(i);
+      const targetChild = Yoga.Node.create();
+      this._cloneYogaTree(sourceChild, targetChild, targetMetadata);
+      targetNode.insertChild(targetChild, i);
+    }
+  }
 }
 
 /**
