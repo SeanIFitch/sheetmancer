@@ -1,21 +1,10 @@
 import { DndContext, DragEndEvent, DragMoveEvent } from '@dnd-kit/core';
 import { useState, useRef } from 'react';
-import type {LayoutNode, SheetLayout} from './types/layout';
+import type { SheetLayout } from './types/layout';
 import { PageLayout } from './types/layout';
 import { ComponentPalette } from './components/ComponentPalette';
 import { LayoutRenderer } from './components/LayoutRenderer';
 
-function layoutTreeToString(node: LayoutNode, indent = ""): string {
-  if ("children" in node) {
-    let str = `${indent}- SplitNode (id: ${node.id}, direction: ${node.direction})\n`;
-    for (const child of node.children) {
-      str += layoutTreeToString(child, indent + "  ");
-    }
-    return str;
-  } else {
-    return `${indent}- LeafNode (id: ${node.id}, component: ${node.component})\n`;
-  }
-}
 
 function App() {
   const [layout, setLayout] = useState<SheetLayout>(() => createInitialLayout());
@@ -76,7 +65,6 @@ function App() {
         <div>
           <ComponentPalette />
           <button onClick={handleClearLayout}>Clear Layout</button>
-          <pre>{layoutTreeToString(layout.pages[0].root)}</pre>
         </div>
 
         <LayoutRenderer
@@ -94,11 +82,7 @@ function createInitialLayout(): SheetLayout {
       id: crypto.randomUUID(),
       width: 816,
       height: 1056,
-      root: {
-        type: 'leaf',
-        id: crypto.randomUUID(),
-        component: '',
-      }
+      rootComponent: '',
     })]
   };
 }
