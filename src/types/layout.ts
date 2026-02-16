@@ -1,4 +1,4 @@
-import Yoga, { Edge } from 'yoga-layout';
+import Yoga, { Node, Edge } from 'yoga-layout';
 
 /**
  * Layout configuration for a single page (8.5" x 11" at 96dpi)
@@ -14,10 +14,10 @@ export interface PageLayoutConfig {
  * PageLayout class - manages page layout with methods for manipulation
  */
 export class PageLayout {
-  private _id: string;
-  private _width: number;
-  private _height: number;
-  private _root: LayoutNode;
+  private readonly _id: string;
+  private readonly _width: number;
+  private readonly _height: number;
+  private readonly _root: LayoutNode;
   private _layoutCache: LayoutNodeBounds[] | null = null;
 
   constructor(config: PageLayoutConfig) {
@@ -51,13 +51,6 @@ export class PageLayout {
       this._layoutCache = this._computeLayout();
     }
     return this._layoutCache;
-  }
-
-  /**
-   * Invalidate the layout cache
-   */
-  private _invalidateCache(): void {
-    this._layoutCache = null;
   }
 
   /**
@@ -241,7 +234,7 @@ export class PageLayout {
   /**
    * Build Yoga tree from layout node
    */
-  private _buildYogaTree(node: LayoutNode): Yoga.Node {
+  private _buildYogaTree(node: LayoutNode): Node {
     const yogaNode = Yoga.Node.create();
 
     if (node.type === 'leaf') {
@@ -272,7 +265,7 @@ export class PageLayout {
    * Extract layout from Yoga tree
    */
   private _extractLayout(
-    yogaNode: Yoga.Node,
+    yogaNode: Node,
     configNode: LayoutNode,
     depth: number = 0
   ): LayoutNodeBounds[] {
